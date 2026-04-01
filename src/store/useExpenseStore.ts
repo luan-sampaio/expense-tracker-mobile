@@ -1,25 +1,7 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist, StateStorage } from 'zustand/middleware';
-import { MMKV } from 'react-native-mmkv';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ExpenseState, Transaction } from '../types';
-
-export const storage = new MMKV({
-  id: 'expense-tracker-storage',
-});
-
-// Create a custom storage adapter for Zustand
-const zustandStorage: StateStorage = {
-  setItem: (name, value) => {
-    return storage.set(name, value);
-  },
-  getItem: (name) => {
-    const value = storage.getString(name);
-    return value ?? null;
-  },
-  removeItem: (name) => {
-    return storage.delete(name);
-  },
-};
 
 export const useExpenseStore = create<ExpenseState>()(
   persist(
@@ -52,8 +34,8 @@ export const useExpenseStore = create<ExpenseState>()(
       clearAll: () => set({ transactions: [] }),
     }),
     {
-      name: 'expense-storage', // key in MMKV
-      storage: createJSONStorage(() => zustandStorage),
+      name: 'expense-storage', // key in AsyncStorage
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );
