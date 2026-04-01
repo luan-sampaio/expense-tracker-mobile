@@ -22,5 +22,6 @@ export interface ExpenseState {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   removeTransaction: (id: string) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
+  fetchCloudTransactions: () => Promise<void>;
   clearAll: () => void;
 }
