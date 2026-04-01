@@ -19,9 +19,13 @@ export interface Transaction {
 
 export interface ExpenseState {
   transactions: Transaction[];
+  isLoading: boolean;
+  error: string | null;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   removeTransaction: (id: string) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   fetchCloudTransactions: () => Promise<void>;
+  syncTransactionToCloud: (transaction: Transaction) => Promise<void>;
+  removeTransactionFromCloud: (id: string) => Promise<void>;
   clearAll: () => void;
 }

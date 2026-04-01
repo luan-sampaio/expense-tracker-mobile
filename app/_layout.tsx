@@ -1,14 +1,15 @@
-import 'react-native-gesture-handler';
-import 'react-native-reanimated';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useSupabaseSync } from '@/src/hooks/useSupabaseSync';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import 'react-native-reanimated';
 
-import { useEffect } from 'react';
 import { supabase } from '@/src/lib/supabase';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -16,6 +17,9 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  
+  // Initialize Supabase sync
+  useSupabaseSync();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
