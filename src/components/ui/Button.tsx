@@ -1,11 +1,11 @@
+import { theme } from '@/src/styles/theme';
 import React from 'react';
 import {
-  TouchableOpacity,
-  TouchableOpacityProps,
-  StyleSheet,
-  ActivityIndicator,
+    ActivityIndicator,
+    StyleSheet,
+    TouchableOpacity,
+    TouchableOpacityProps,
 } from 'react-native';
-import { theme } from '@/src/styles/theme';
 import { Typography } from './Typography';
 
 interface ButtonProps extends TouchableOpacityProps {
@@ -25,22 +25,22 @@ export function Button({
   const getBackgroundColor = () => {
     if (disabled) return theme.colors.border;
     switch (variant) {
-      case 'primary': return theme.colors.primaryText;
-      case 'secondary': return theme.colors.surface;
+      case 'primary': return theme.colors.primary;
+      case 'secondary': return theme.colors.surfaceSecondary;
       case 'danger': return theme.colors.expense;
       case 'ghost': return 'transparent';
-      default: return theme.colors.primaryText;
+      default: return theme.colors.primary;
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return theme.colors.secondaryText;
+    if (disabled) return theme.colors.tertiaryText;
     switch (variant) {
-      case 'primary': return theme.colors.background;
+      case 'primary': return '#FFFFFF';
       case 'secondary': return theme.colors.primaryText;
-      case 'danger': return theme.colors.background;
-      case 'ghost': return theme.colors.primaryText;
-      default: return theme.colors.background;
+      case 'danger': return '#FFFFFF';
+      case 'ghost': return theme.colors.primary;
+      default: return '#FFFFFF';
     }
   };
 
@@ -78,5 +78,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
+    ...theme.shadows.sm,
   },
 });

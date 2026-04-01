@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Typography } from './Typography';
 import { theme } from '@/src/styles/theme';
+import React from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Typography } from './Typography';
 
 export type Period = 'week' | 'month' | 'year' | 'all';
 
@@ -49,7 +49,7 @@ export function PeriodFilter({ selectedPeriod, onSelectPeriod }: PeriodFilterPro
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     padding: 4,
   },
@@ -61,6 +61,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   periodButtonSelected: {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.sm,
   },
 });

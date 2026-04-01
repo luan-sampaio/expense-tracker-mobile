@@ -11,14 +11,14 @@ import { PieChart } from 'react-native-chart-kit';
 const screenWidth = Dimensions.get('window').width;
 
 const CHART_COLORS = [
-  '#FF3B30',
-  '#FF9500',
-  '#FFCC00',
-  '#34C759',
-  '#5AC8FA',
-  '#007AFF',
-  '#5856D6',
-  '#FF2D55',
+  '#D4634A',
+  '#D4A04A',
+  '#1B9C85',
+  '#5B8DB8',
+  '#9B7EC8',
+  '#E8816C',
+  '#2CC5A6',
+  '#C4856A',
 ];
 
 export default function ExploreScreen() {
@@ -155,12 +155,12 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.xl,
     borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
   },
   summaryBox: {
     backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.xl,
     borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    ...theme.shadows.sm,
   }
 });

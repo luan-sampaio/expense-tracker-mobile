@@ -1,13 +1,14 @@
 -- Tabela de transações para o Expense Tracker
+-- IMPORTANTE: Se a tabela já existe, delete-a primeiro com: DROP TABLE IF EXISTS transactions;
 CREATE TABLE IF NOT EXISTS transactions (
   id TEXT PRIMARY KEY,
-  amount DECIMAL(10,2) NOT NULL,
-  date TIMESTAMP WITH TIME ZONE NOT NULL,
+  amount NUMERIC(10,2) NOT NULL,
+  date TIMESTAMPTZ NOT NULL,
   category TEXT NOT NULL,
   type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
   description TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Índices para melhor performance

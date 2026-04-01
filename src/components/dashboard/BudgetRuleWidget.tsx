@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Typography } from '../ui/Typography';
-import { Spacer } from '../ui/Spacer';
-import { theme } from '@/src/styles/theme';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
+import { theme } from '@/src/styles/theme';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { Spacer } from '../ui/Spacer';
+import { Typography } from '../ui/Typography';
 
 interface ProgressBarProps {
   label: string;
@@ -79,9 +79,9 @@ export function BudgetRuleWidget() {
       </Typography>
       <Spacer size="md" />
       
-      <ProgressBar label="Essenciais (50%)" spent={spentNeeds} limit={limitNeeds} color="#007AFF" />
+      <ProgressBar label="Essenciais (50%)" spent={spentNeeds} limit={limitNeeds} color={theme.colors.info} />
       <Spacer size="sm" />
-      <ProgressBar label="Desejos/Livres (30%)" spent={spentWants} limit={limitWants} color="#FF9500" />
+      <ProgressBar label="Desejos/Livres (30%)" spent={spentWants} limit={limitWants} color={theme.colors.accent} />
       <Spacer size="sm" />
       <ProgressBar label="Poupança/Acúmulo (20%)" spent={spentSavings} limit={limitSavings} color={theme.colors.income} />
     </View>
@@ -93,6 +93,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.lg,
+    ...theme.shadows.sm,
   },
   progressContainer: {
     width: '100%',
@@ -105,7 +106,7 @@ const styles = StyleSheet.create({
   track: {
     width: '100%',
     height: 8,
-    backgroundColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceSecondary,
     borderRadius: 4,
     overflow: 'hidden',
   },

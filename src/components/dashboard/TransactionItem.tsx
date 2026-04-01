@@ -115,7 +115,7 @@ export function TransactionItem({ transaction }: Props) {
 
 const styles = StyleSheet.create({
   swipeableContainer: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.colors.expense,
     borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
   },
@@ -125,10 +125,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    ...theme.shadows.sm,
   },
   leftContent: {
     flexDirection: 'row',
@@ -142,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editAction: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'flex-start',
     width: 100,
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
   },
   deleteAction: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: theme.colors.expense,
     justifyContent: 'center',
     alignItems: 'flex-end',
     width: 100,

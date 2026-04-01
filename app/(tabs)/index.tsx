@@ -34,7 +34,7 @@ export default function HomeScreen() {
           {error && (
             <Container padding="lg" flex={0}>
               <View style={styles.errorCard}>
-                <Typography variant="body" color="#FF3B30" align="center">
+                <Typography variant="body" color={theme.colors.expense} align="center">
                   {error}
                 </Typography>
               </View>
@@ -88,12 +88,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: theme.spacing.xxl,
+    ...theme.shadows.sm,
   },
   errorCard: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: theme.colors.expenseBackground,
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#FF3B30',
+    borderColor: theme.colors.expenseBorder,
   }
 });

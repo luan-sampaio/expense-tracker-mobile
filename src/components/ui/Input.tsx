@@ -1,8 +1,8 @@
-import React from 'react';
-import { TextInput, TextInputProps, StyleSheet, View } from 'react-native';
 import { theme } from '@/src/styles/theme';
-import { Typography } from './Typography';
+import React from 'react';
+import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
 import { Spacer } from './Spacer';
+import { Typography } from './Typography';
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -49,13 +49,14 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     height: 52,
     borderRadius: theme.borderRadius.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
     fontSize: theme.typography.sizes.body,
     color: theme.colors.primaryText,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: theme.colors.borderLight,
   },
   inputError: {
     borderColor: theme.colors.expense,
+    backgroundColor: theme.colors.expenseBackground,
   },
 });

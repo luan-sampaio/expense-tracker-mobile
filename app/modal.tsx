@@ -5,6 +5,7 @@ import { Input } from '@/src/components/ui/Input';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
+import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
@@ -114,7 +115,7 @@ export default function ModalScreen() {
         }}
       />
       {errors.amount ? (
-        <Typography variant="caption" color="#FF3B30" style={{ marginTop: 4 }}>
+        <Typography variant="caption" color={theme.colors.expense} style={{ marginTop: 4 }}>
           {errors.amount}
         </Typography>
       ) : null}
@@ -130,7 +131,7 @@ export default function ModalScreen() {
         }}
       />
       {errors.description ? (
-        <Typography variant="caption" color="#FF3B30" style={{ marginTop: 4 }}>
+        <Typography variant="caption" color={theme.colors.expense} style={{ marginTop: 4 }}>
           {errors.description}
         </Typography>
       ) : null}

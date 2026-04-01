@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { Typography } from './Typography';
 import { theme } from '@/src/styles/theme';
+import React from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Typography } from './Typography';
 
 export type CategoryOption = {
   id: string;
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     marginRight: theme.spacing.sm,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     borderWidth: 2,
     borderColor: 'transparent',
@@ -104,6 +104,7 @@ const styles = StyleSheet.create({
   categoryItemSelected: {
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primaryBackground,
+    ...theme.shadows.sm,
   },
   icon: {
     fontSize: 32,
