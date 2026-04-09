@@ -13,8 +13,10 @@ interface ProgressBarProps {
 }
 
 function ProgressBar({ label, spent, limit, color }: ProgressBarProps) {
-  const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
-  const isOverBudget = spent > limit;
+  const s = Number(spent) || 0;
+  const l = Number(limit) || 0;
+  const percentage = l > 0 ? Math.min((s / l) * 100, 100) : 0;
+  const isOverBudget = s > l;
 
   return (
     <View style={styles.progressContainer}>
@@ -23,7 +25,7 @@ function ProgressBar({ label, spent, limit, color }: ProgressBarProps) {
           {label}
         </Typography>
         <Typography variant="caption" color={isOverBudget ? theme.colors.expense : theme.colors.secondaryText}>
-          R${spent.toFixed(0)} / R${limit.toFixed(0)}
+          R${s.toFixed(0)} / R${l.toFixed(0)}
         </Typography>
       </View>
       <Spacer size="xs" />
@@ -44,7 +46,7 @@ export function BudgetRuleWidget() {
 
   const income = transactions
     .filter((t) => t.type === 'income')
-    .reduce((acc, t) => acc + t.amount, 0);
+    .reduce((acc, t) => acc + Number(t.amount), 0);
 
   const needsKeywords = ['food', 'comida', 'mercado', 'housing', 'casa', 'aluguel', 'transport', 'transporte', 'saúde', 'conta', 'luz', 'agua'];
   const savingsKeywords = ['investimento', 'poupança', 'reserva', 'saving'];
@@ -55,12 +57,13 @@ export function BudgetRuleWidget() {
 
   transactions.filter((t) => t.type === 'expense').forEach((t) => {
     const cat = t.category.toLowerCase();
+    const amount = Number(t.amount);
     const isNeed = needsKeywords.some((k) => cat.includes(k));
     const isSaving = savingsKeywords.some((k) => cat.includes(k));
 
-    if (isSaving) spentSavings += t.amount;
-    else if (isNeed) spentNeeds += t.amount;
-    else spentWants += t.amount;
+    if (isSaving) spentSavings += amount;
+    else if (isNeed) spentNeeds += amount;
+    else spentWants += amount;
   });
 
   const limitNeeds = income * 0.5;

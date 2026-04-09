@@ -55,7 +55,7 @@ export default function ExploreScreen() {
     .reduce((acc, current) => {
       const cat = current.category.charAt(0).toUpperCase() + current.category.slice(1);
       if (!acc[cat]) acc[cat] = 0;
-      acc[cat] += current.amount;
+      acc[cat] += Number(current.amount);
       return acc;
     }, {} as Record<string, number>);
 

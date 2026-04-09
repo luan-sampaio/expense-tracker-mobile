@@ -19,8 +19,11 @@ export interface Transaction {
 
 export interface ExpenseState {
   transactions: Transaction[];
+  isLoading: boolean;
+  error: string | null;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   removeTransaction: (id: string) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   clearAll: () => void;
+  syncAll: () => Promise<void>;
 }

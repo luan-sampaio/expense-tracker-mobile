@@ -3,6 +3,7 @@ import { BudgetRuleWidget } from '@/src/components/dashboard/BudgetRuleWidget';
 import { TransactionItem } from '@/src/components/dashboard/TransactionItem';
 import { Button } from '@/src/components/ui/Button';
 import { Container } from '@/src/components/ui/Container';
+import { LoadingSpinner } from '@/src/components/ui/LoadingSpinner';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
@@ -10,24 +11,35 @@ import { theme } from '@/src/styles/theme';
 import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function HomeScreen() {
   const transactions = useExpenseStore((state) => state.transactions);
+  const isLoading = useExpenseStore((state) => state.isLoading);
+  const error = useExpenseStore((state) => state.error);
 
   const sortedTransactions = [...transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
   );
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Container padding={0} backgroundColor={theme.colors.background}>
+    <Container padding={0} backgroundColor={theme.colors.background}>
         <ScrollView 
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
           <Spacer size="xxl" />
-          
+
+          {error && (
+            <Container padding="lg" flex={0}>
+              <View style={styles.errorCard}>
+                <Typography variant="body" color={theme.colors.expense} align="center">
+                  {error}
+                </Typography>
+              </View>
+              <Spacer size="md" />
+            </Container>
+          )}
+
           <BalanceHeader />
           
           <Container padding="lg" flex={0}>
@@ -42,7 +54,9 @@ export default function HomeScreen() {
           </Typography>
           <Spacer size="lg" />
           
-          {sortedTransactions.length === 0 ? (
+          {isLoading ? (
+            <LoadingSpinner message="Sincronizando..." />
+          ) : sortedTransactions.length === 0 ? (
             <Container padding="lg" backgroundColor={theme.colors.surface} style={styles.emptyCard}>
               <Typography variant="body" color={theme.colors.secondaryText} align="center">
                 Você ainda não tem gastos ou receitas cadastrados.
@@ -57,8 +71,7 @@ export default function HomeScreen() {
           )}
         </Container>
       </ScrollView>
-      </Container>
-    </GestureHandlerRootView>
+    </Container>
   );
 }
 

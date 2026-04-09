@@ -9,16 +9,16 @@ export function BalanceHeader() {
   const transactions = useExpenseStore((state) => state.transactions);
   
   const balance = transactions.reduce((acc, curr) => {
-    return curr.type === 'income' ? acc + curr.amount : acc - curr.amount;
+    return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
   }, 0);
 
   const totalIncome = transactions
     .filter(t => t.type === 'income')
-    .reduce((acc, t) => acc + t.amount, 0);
+    .reduce((acc, t) => acc + Number(t.amount), 0);
 
   const totalExpense = transactions
     .filter(t => t.type === 'expense')
-    .reduce((acc, t) => acc + t.amount, 0);
+    .reduce((acc, t) => acc + Number(t.amount), 0);
 
   const fmt = (value: number) => new Intl.NumberFormat('pt-BR', {
     style: 'currency',
