@@ -4,6 +4,7 @@ import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
 import { useFilteredTransactions } from '@/src/hooks/useFilteredTransactions';
 import { theme } from '@/src/styles/theme';
+import { formatCurrency } from '@/src/utils/formatters';
 import React, { useState } from 'react';
 import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
@@ -107,7 +108,7 @@ export default function ExploreScreen() {
               Total Acumulado
             </Typography>
             <Typography variant="heading" weight="bold" color={theme.colors.expense}>
-              R$ {totalExpenses.toFixed(2).replace('.', ',')}
+              {formatCurrency(totalExpenses)}
             </Typography>
           </View>
         </Container>

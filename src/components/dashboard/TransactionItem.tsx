@@ -1,6 +1,7 @@
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { Transaction } from '@/src/types';
+import { formatCurrency } from '@/src/utils/formatters';
 import { router } from 'expo-router';
 import React from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -16,10 +17,7 @@ export function TransactionItem({ transaction }: Props) {
   const isIncome = transaction.type === 'income';
   const removeTransaction = useExpenseStore((state) => state.removeTransaction);
 
-  const formattedAmount = new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(transaction.amount);
+  const formattedAmount = formatCurrency(transaction.amount);
 
   const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
 
@@ -39,6 +37,7 @@ export function TransactionItem({ transaction }: Props) {
         editDescription: transaction.description,
         editCategory: transaction.category,
         editType: transaction.type,
+        editDate: transaction.date,
       }
     });
   };

@@ -322,11 +322,26 @@ export default function HomeScreen() {
             <LoadingSpinner message="Sincronizando..." />
           ) : filteredTransactions.length === 0 ? (
             <Container padding="lg" backgroundColor={theme.colors.surface} style={styles.emptyCard}>
+              <Typography variant="hero" align="center" style={styles.emptyIcon}>
+                {hasActiveFilters ? '🔎' : '💸'}
+              </Typography>
+              <Spacer size="sm" />
+              <Typography variant="body" weight="semibold" color={theme.colors.primaryText} align="center">
+                {hasActiveFilters ? 'Nada encontrado' : 'Comece pelo primeiro lançamento'}
+              </Typography>
+              <Spacer size="xs" />
               <Typography variant="body" color={theme.colors.secondaryText} align="center">
                 {hasActiveFilters
-                  ? 'Nenhuma transação encontrada com os filtros atuais.'
-                  : 'Você ainda não tem gastos ou receitas cadastrados.'}
+                  ? 'Tente ajustar a busca, período, tipo ou categoria para encontrar uma transação.'
+                  : 'Adicione uma receita ou despesa para acompanhar seu saldo e seus gastos.'}
               </Typography>
+              <Spacer size="lg" />
+              <Button
+                label={hasActiveFilters ? 'Limpar filtros' : 'Adicionar primeira transação'}
+                variant={hasActiveFilters ? 'secondary' : 'primary'}
+                onPress={hasActiveFilters ? clearFilters : () => router.push('/modal')}
+                style={styles.emptyButton}
+              />
             </Container>
           ) : (
             <View>
@@ -352,6 +367,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: theme.spacing.xxl,
     ...theme.shadows.sm,
+  },
+  emptyIcon: {
+    lineHeight: 48,
+  },
+  emptyButton: {
+    alignSelf: 'stretch',
   },
   errorCard: {
     backgroundColor: theme.colors.expenseBackground,

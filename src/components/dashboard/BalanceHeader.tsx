@@ -1,5 +1,6 @@
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
+import { formatCurrency } from '@/src/utils/formatters';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Spacer } from '../ui/Spacer';
@@ -20,11 +21,6 @@ export function BalanceHeader() {
     .filter(t => t.type === 'expense')
     .reduce((acc, t) => acc + t.amount, 0);
 
-  const fmt = (value: number) => new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(value);
-
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -33,7 +29,7 @@ export function BalanceHeader() {
         </Typography>
         <Spacer size="xs" />
         <Typography variant="hero" weight="bold" color={theme.colors.primaryText}>
-          {fmt(balance)}
+          {formatCurrency(balance)}
         </Typography>
         <Spacer size="lg" />
         <View style={styles.row}>
@@ -42,7 +38,7 @@ export function BalanceHeader() {
             <View>
               <Typography variant="caption" color={theme.colors.secondaryText}>Receitas</Typography>
               <Typography variant="body" weight="semibold" color={theme.colors.income}>
-                {fmt(totalIncome)}
+                {formatCurrency(totalIncome)}
               </Typography>
             </View>
           </View>
@@ -51,7 +47,7 @@ export function BalanceHeader() {
             <View>
               <Typography variant="caption" color={theme.colors.secondaryText}>Despesas</Typography>
               <Typography variant="body" weight="semibold" color={theme.colors.expense}>
-                {fmt(totalExpense)}
+                {formatCurrency(totalExpense)}
               </Typography>
             </View>
           </View>

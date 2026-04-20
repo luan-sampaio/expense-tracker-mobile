@@ -1,5 +1,6 @@
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
+import { formatCurrency } from '@/src/utils/formatters';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Spacer } from '../ui/Spacer';
@@ -25,7 +26,7 @@ function ProgressBar({ label, spent, limit, color }: ProgressBarProps) {
           {label}
         </Typography>
         <Typography variant="caption" color={isOverBudget ? theme.colors.expense : theme.colors.secondaryText}>
-          R${s.toFixed(0)} / R${l.toFixed(0)}
+          {formatCurrency(s)} / {formatCurrency(l)}
         </Typography>
       </View>
       <Spacer size="xs" />

@@ -8,9 +8,27 @@ import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
 import { parseAmount, TransactionFormErrors, validateTransactionForm } from '@/src/utils/validation';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+function formatDateLabel(date: Date) {
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function createDateFromInput(value: string) {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
 
 export default function ModalScreen() {
   const params = useLocalSearchParams();
@@ -24,7 +42,20 @@ export default function ModalScreen() {
   const [amount, setAmount] = useState((params.editAmount as string) || '');
   const [description, setDescription] = useState((params.editDescription as string) || '');
   const [category, setCategory] = useState<string>((params.editCategory as string) || 'other');
+  const [date, setDate] = useState(() => {
+    const editDate = params.editDate as string | undefined;
+    return editDate ? new Date(editDate) : new Date();
+  });
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [errors, setErrors] = useState<TransactionFormErrors>({ amount: '', description: '' });
+
+  const handleDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
+    setIsDatePickerVisible(false);
+
+    if (selectedDate) {
+      setDate(selectedDate);
+    }
+  };
 
   const handleSave = () => {
     const { errors: newErrors, isValid } = validateTransactionForm({ amount, description });
@@ -42,6 +73,7 @@ export default function ModalScreen() {
         description: description.trim(),
         type,
         category: category.trim().toLowerCase(),
+        date: date.toISOString(),
       });
     } else {
       addTransaction({
@@ -49,7 +81,7 @@ export default function ModalScreen() {
         description: description.trim(),
         type,
         category: category.trim().toLowerCase(),
-        date: new Date().toISOString(),
+        date: date.toISOString(),
       });
     }
     
@@ -116,6 +148,46 @@ export default function ModalScreen() {
       ) : null}
       <Spacer size="lg" />
 
+      <View>
+        <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
+          Data
+        </Typography>
+        <Spacer size="xs" />
+        {Platform.OS === 'web' ? (
+          <Input
+            value={formatDateInputValue(date)}
+            onChangeText={(value) => {
+              const nextDate = createDateFromInput(value);
+              if (!Number.isNaN(nextDate.getTime())) {
+                setDate(nextDate);
+              }
+            }}
+          />
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.dateButton}
+              onPress={() => setIsDatePickerVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Typography variant="body" weight="semibold">
+                {formatDateLabel(date)}
+              </Typography>
+            </TouchableOpacity>
+            {isDatePickerVisible && (
+              <DateTimePicker
+                value={date}
+                mode="date"
+                display="default"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
+          </>
+        )}
+      </View>
+      <Spacer size="lg" />
+
       <CategoryPicker 
         selectedCategory={category}
         onSelectCategory={setCategory}
@@ -135,5 +207,14 @@ const styles = StyleSheet.create({
   },
   typeButton: {
     flex: 1,
-  }
+  },
+  dateButton: {
+    height: 52,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.lg,
+  },
 });
