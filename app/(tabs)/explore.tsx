@@ -2,6 +2,7 @@ import { Container } from '@/src/components/ui/Container';
 import { Period, PeriodFilter } from '@/src/components/ui/PeriodFilter';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
+import { getCategoryMeta } from '@/src/constants/categories';
 import { useFilteredTransactions } from '@/src/hooks/useFilteredTransactions';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency } from '@/src/utils/formatters';
@@ -11,17 +12,6 @@ import { PieChart } from 'react-native-chart-kit';
 
 const screenWidth = Dimensions.get('window').width;
 
-const CHART_COLORS = [
-  '#D4634A',
-  '#D4A04A',
-  '#1B9C85',
-  '#5B8DB8',
-  '#9B7EC8',
-  '#E8816C',
-  '#2CC5A6',
-  '#C4856A',
-];
-
 export default function ExploreScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('month');
   const filteredTransactions = useFilteredTransactions(selectedPeriod);
@@ -29,17 +19,19 @@ export default function ExploreScreen() {
   const expensesByCategory = filteredTransactions
     .filter(t => t.type === 'expense')
     .reduce((acc, current) => {
-      const cat = current.category.charAt(0).toUpperCase() + current.category.slice(1);
+      const cat = current.category;
       if (!acc[cat]) acc[cat] = 0;
       acc[cat] += current.amount;
       return acc;
     }, {} as Record<string, number>);
 
-  const chartData = Object.keys(expensesByCategory).map((categoryName, index) => {
+  const chartData = Object.keys(expensesByCategory).map((categoryName) => {
+    const categoryMeta = getCategoryMeta(categoryName);
+
     return {
-      name: categoryName,
+      name: categoryMeta.label,
       population: expensesByCategory[categoryName],
-      color: CHART_COLORS[index % CHART_COLORS.length],
+      color: categoryMeta.color,
       legendFontColor: theme.colors.primaryText,
       legendFontSize: 14,
     };

@@ -8,6 +8,7 @@ import { LoadingSpinner } from '@/src/components/ui/LoadingSpinner';
 import { Period, PeriodFilter } from '@/src/components/ui/PeriodFilter';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
+import { getCategoryMeta } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
@@ -55,10 +56,6 @@ function isWithinPeriod(date: string, period: Period) {
   }
 
   return transactionDate.getFullYear() === today.getFullYear();
-}
-
-function formatCategoryLabel(category: string) {
-  return category.charAt(0).toUpperCase() + category.slice(1);
 }
 
 export default function HomeScreen() {
@@ -299,7 +296,7 @@ export default function HomeScreen() {
                       weight={isSelected ? 'semibold' : 'regular'}
                       color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
                     >
-                      {formatCategoryLabel(category)}
+                      {getCategoryMeta(category).label}
                     </Typography>
                   </TouchableOpacity>
                 );

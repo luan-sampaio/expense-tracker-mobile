@@ -4,6 +4,7 @@ import { Container } from '@/src/components/ui/Container';
 import { Input } from '@/src/components/ui/Input';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
+import { getCategoriesByType } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
@@ -11,7 +12,7 @@ import { parseAmount, TransactionFormErrors, validateTransactionForm } from '@/s
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, StyleSheet, ToastAndroid, TouchableOpacity, View } from 'react-native';
 
 function formatDateLabel(date: Date) {
   return date.toLocaleDateString('pt-BR', {
@@ -49,11 +50,38 @@ export default function ModalScreen() {
   const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
   const [errors, setErrors] = useState<TransactionFormErrors>({ amount: '', description: '' });
 
+  const showSaveFeedback = () => {
+    const message = isEditing
+      ? 'Transação atualizada com sucesso.'
+      : 'Transação adicionada com sucesso.';
+
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+      router.back();
+      return;
+    }
+
+    Alert.alert('Tudo certo', message, [
+      { text: 'OK', onPress: () => router.back() },
+    ]);
+  };
+
   const handleDateChange = (_event: DateTimePickerEvent, selectedDate?: Date) => {
     setIsDatePickerVisible(false);
 
     if (selectedDate) {
       setDate(selectedDate);
+    }
+  };
+
+  const handleTypeChange = (nextType: TransactionType) => {
+    const categories = getCategoriesByType(nextType);
+    const categoryStillAvailable = categories.some((item) => item.id === category);
+
+    setType(nextType);
+
+    if (!categoryStillAvailable) {
+      setCategory(categories[0]?.id ?? 'other');
     }
   };
 
@@ -85,7 +113,7 @@ export default function ModalScreen() {
       });
     }
     
-    router.back();
+    showSaveFeedback();
   };
 
   return (
@@ -103,14 +131,14 @@ export default function ModalScreen() {
           label="Despesa" 
           variant={type === 'expense' ? 'danger' : 'secondary'} 
           style={styles.typeButton}
-          onPress={() => setType('expense')}
+          onPress={() => handleTypeChange('expense')}
         />
         <Spacer size="md" horizontal />
         <Button 
           label="Receita" 
           variant={type === 'income' ? 'primary' : 'secondary'} 
           style={styles.typeButton}
-          onPress={() => setType('income')}
+          onPress={() => handleTypeChange('income')}
         />
       </View>
       <Spacer size="xl" />
@@ -195,7 +223,7 @@ export default function ModalScreen() {
       />
       <Spacer size="xxl" />
 
-      <Button label="Salvar" onPress={handleSave} />
+      <Button label={isEditing ? 'Salvar alterações' : 'Salvar'} onPress={handleSave} />
     </Container>
   );
 }

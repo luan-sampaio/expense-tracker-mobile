@@ -1,42 +1,18 @@
+import { getCategoriesByType } from '@/src/constants/categories';
 import { theme } from '@/src/styles/theme';
+import { TransactionType } from '@/src/types';
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Typography } from './Typography';
 
-export type CategoryOption = {
-  id: string;
-  label: string;
-  icon: string;
-};
-
-const EXPENSE_CATEGORIES: CategoryOption[] = [
-  { id: 'food', label: 'Alimentação', icon: '🍔' },
-  { id: 'transport', label: 'Transporte', icon: '🚗' },
-  { id: 'housing', label: 'Moradia', icon: '🏠' },
-  { id: 'entertainment', label: 'Lazer', icon: '🎮' },
-  { id: 'health', label: 'Saúde', icon: '💊' },
-  { id: 'education', label: 'Educação', icon: '📚' },
-  { id: 'shopping', label: 'Compras', icon: '🛍️' },
-  { id: 'bills', label: 'Contas', icon: '📄' },
-  { id: 'other', label: 'Outros', icon: '📦' },
-];
-
-const INCOME_CATEGORIES: CategoryOption[] = [
-  { id: 'salary', label: 'Salário', icon: '💰' },
-  { id: 'freelance', label: 'Freelance', icon: '💼' },
-  { id: 'investment', label: 'Investimento', icon: '📈' },
-  { id: 'gift', label: 'Presente', icon: '🎁' },
-  { id: 'other', label: 'Outros', icon: '📦' },
-];
-
 interface CategoryPickerProps {
   selectedCategory: string;
   onSelectCategory: (categoryId: string) => void;
-  type: 'income' | 'expense';
+  type: TransactionType;
 }
 
 export function CategoryPicker({ selectedCategory, onSelectCategory, type }: CategoryPickerProps) {
-  const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const categories = getCategoriesByType(type);
 
   return (
     <View style={styles.container}>
@@ -55,7 +31,11 @@ export function CategoryPicker({ selectedCategory, onSelectCategory, type }: Cat
               key={category.id}
               style={[
                 styles.categoryItem,
+                {
+                  backgroundColor: category.backgroundColor,
+                },
                 isSelected && styles.categoryItemSelected,
+                isSelected && { borderColor: category.color },
               ]}
               onPress={() => onSelectCategory(category.id)}
               activeOpacity={0.7}
@@ -66,7 +46,7 @@ export function CategoryPicker({ selectedCategory, onSelectCategory, type }: Cat
               <Typography
                 variant="caption"
                 weight={isSelected ? 'semibold' : 'regular'}
-                color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
+                color={isSelected ? category.color : theme.colors.secondaryText}
                 align="center"
               >
                 {category.label}
@@ -102,8 +82,6 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   categoryItemSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryBackground,
     ...theme.shadows.sm,
   },
   icon: {

@@ -1,3 +1,4 @@
+import { getCategoryMeta } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { Transaction } from '@/src/types';
@@ -16,6 +17,7 @@ interface Props {
 export function TransactionItem({ transaction }: Props) {
   const isIncome = transaction.type === 'income';
   const removeTransaction = useExpenseStore((state) => state.removeTransaction);
+  const categoryMeta = getCategoryMeta(transaction.category);
 
   const formattedAmount = formatCurrency(transaction.amount);
 
@@ -82,10 +84,10 @@ export function TransactionItem({ transaction }: Props) {
         <View style={styles.leftContent}>
           <View style={[
             styles.iconPlaceholder, 
-            { backgroundColor: isIncome ? theme.colors.incomeBackground : theme.colors.expenseBackground }
+            { backgroundColor: categoryMeta.backgroundColor }
           ]}>
-             <Typography variant="title" weight="bold" color={isIncome ? theme.colors.income : theme.colors.expense}>
-                {transaction.category.substring(0, 1).toUpperCase()}
+             <Typography variant="title" weight="bold" color={categoryMeta.color}>
+                {categoryMeta.icon}
              </Typography>
           </View>
           <Spacer horizontal size="md" />
@@ -95,7 +97,7 @@ export function TransactionItem({ transaction }: Props) {
             </Typography>
             <Spacer size="xs" />
             <Typography variant="caption" color={theme.colors.secondaryText}>
-              {dateStr} • {transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
+              {dateStr} • {categoryMeta.label}
             </Typography>
           </View>
         </View>
