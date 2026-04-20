@@ -1,5 +1,10 @@
 import { api } from '../lib/api';
 import { PendingMutation, Transaction } from '../types';
+import {
+  TRANSACTIONS_ENDPOINT,
+  TRANSACTIONS_SYNC_ENDPOINT,
+  transactionEndpoint,
+} from './endpoints';
 
 type TransactionSyncOperation = {
   operation: 'add' | 'update' | 'remove';
@@ -43,22 +48,22 @@ function toSyncOperation(mutation: PendingMutation): TransactionSyncOperation {
 }
 
 export const transactionsApi = {
-  list: () => api.get<Transaction[]>('/transactions/'),
+  list: () => api.get<Transaction[]>(TRANSACTIONS_ENDPOINT),
 
   create: (transaction: Transaction) =>
-    api.post<Transaction>('/transactions/', transaction),
+    api.post<Transaction>(TRANSACTIONS_ENDPOINT, transaction),
 
   update: (transaction: Transaction) =>
-    api.put<Transaction>(`/transactions/${transaction.id}/`, transaction),
+    api.put<Transaction>(transactionEndpoint(transaction.id), transaction),
 
-  remove: (id: string) => api.delete(`/transactions/${id}/`),
+  remove: (id: string) => api.delete(transactionEndpoint(id)),
 
   sync: (pendingMutations: PendingMutation[]) => {
     if (pendingMutations.length === 0) {
       return null;
     }
 
-    return api.post<TransactionSyncResponse>('/transactions/sync', {
+    return api.post<TransactionSyncResponse>(TRANSACTIONS_SYNC_ENDPOINT, {
       operations: pendingMutations.map(toSyncOperation),
     });
   },
