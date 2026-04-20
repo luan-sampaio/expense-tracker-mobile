@@ -2,7 +2,11 @@ import { PendingMutation, Transaction } from '../types';
 
 type PendingMutationInput =
   | {
-      type: 'upsert';
+      type: 'create';
+      transaction: Transaction;
+    }
+  | {
+      type: 'update';
       transaction: Transaction;
     }
   | {
@@ -26,21 +30,16 @@ export function createPendingMutation(mutation: PendingMutationInput): PendingMu
   };
 }
 
+function getMutationTransactionId(mutation: PendingMutation) {
+  return mutation.type === 'delete'
+    ? mutation.transactionId
+    : mutation.transaction.id;
+}
+
 export function compactQueue(queue: PendingMutation[], next: PendingMutation) {
+  const nextTransactionId = getMutationTransactionId(next);
   const filtered = queue.filter((mutation) => {
-    if (next.type === 'upsert') {
-      if (mutation.type === 'upsert') {
-        return mutation.transaction.id !== next.transaction.id;
-      }
-
-      return mutation.transactionId !== next.transaction.id;
-    }
-
-    if (mutation.type === 'upsert') {
-      return mutation.transaction.id !== next.transactionId;
-    }
-
-    return mutation.transactionId !== next.transactionId;
+    return getMutationTransactionId(mutation) !== nextTransactionId;
   });
 
   return [...filtered, next];
@@ -53,12 +52,11 @@ export function applyPendingMutations(
   const byId = new Map(transactions.map((transaction) => [transaction.id, transaction]));
 
   pendingMutations.forEach((mutation) => {
-    if (mutation.type === 'upsert') {
+    if (mutation.type === 'delete') {
+      byId.delete(mutation.transactionId);
+    } else {
       byId.set(mutation.transaction.id, mutation.transaction);
-      return;
     }
-
-    byId.delete(mutation.transactionId);
   });
 
   return Array.from(byId.values());
@@ -71,4 +69,3 @@ export function removeAppliedMutations(
   const applied = new Set(appliedMutationIds);
   return queue.filter((mutation) => !applied.has(mutation.id));
 }
-

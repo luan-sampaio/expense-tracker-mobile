@@ -24,7 +24,11 @@ interface PendingMutationBase {
 
 export type PendingMutation =
   | (PendingMutationBase & {
-      type: 'upsert';
+      type: 'create';
+      transaction: Transaction;
+    })
+  | (PendingMutationBase & {
+      type: 'update';
       transaction: Transaction;
     })
   | (PendingMutationBase & {

@@ -39,7 +39,7 @@ export const useExpenseStore = create<ExpenseState>()(
           id: createClientId(),
         };
         const pendingMutation = createPendingMutation({
-          type: 'upsert',
+          type: 'create',
           transaction: newTransaction,
         });
 
@@ -72,7 +72,7 @@ export const useExpenseStore = create<ExpenseState>()(
         if (!existing) return;
         const updated = normalizeTransaction({ ...existing, ...updatedFields });
         const pendingMutation = createPendingMutation({
-          type: 'upsert',
+          type: 'update',
           transaction: updated,
         });
 

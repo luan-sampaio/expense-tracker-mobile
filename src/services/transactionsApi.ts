@@ -19,7 +19,15 @@ export type TransactionSyncResponse = {
 };
 
 function toSyncOperation(mutation: PendingMutation): TransactionSyncOperation {
-  if (mutation.type === 'upsert') {
+  if (mutation.type === 'create') {
+    return {
+      operation: 'add',
+      transaction: mutation.transaction,
+      client_operation_id: mutation.id,
+    };
+  }
+
+  if (mutation.type === 'update') {
     return {
       operation: 'update',
       transaction: mutation.transaction,
@@ -37,6 +45,14 @@ function toSyncOperation(mutation: PendingMutation): TransactionSyncOperation {
 export const transactionsApi = {
   list: () => api.get<Transaction[]>('/transactions/'),
 
+  create: (transaction: Transaction) =>
+    api.post<Transaction>('/transactions/', transaction),
+
+  update: (transaction: Transaction) =>
+    api.put<Transaction>(`/transactions/${transaction.id}/`, transaction),
+
+  remove: (id: string) => api.delete(`/transactions/${id}/`),
+
   sync: (pendingMutations: PendingMutation[]) => {
     if (pendingMutations.length === 0) {
       return null;
@@ -47,4 +63,3 @@ export const transactionsApi = {
     });
   },
 };
-
