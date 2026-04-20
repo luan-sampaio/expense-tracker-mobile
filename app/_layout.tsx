@@ -4,7 +4,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import 'react-native-gesture-handler';
+import { AppState } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
@@ -18,7 +18,22 @@ export default function RootLayout() {
 
   useEffect(() => {
     syncAll();
-  }, []);
+
+    const interval = setInterval(() => {
+      syncAll({ silent: true });
+    }, 15000);
+
+    const subscription = AppState.addEventListener('change', (status) => {
+      if (status === 'active') {
+        syncAll({ silent: true });
+      }
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [syncAll]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

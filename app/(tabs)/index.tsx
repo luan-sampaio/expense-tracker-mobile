@@ -16,6 +16,9 @@ export default function HomeScreen() {
   const transactions = useExpenseStore((state) => state.transactions);
   const isLoading = useExpenseStore((state) => state.isLoading);
   const error = useExpenseStore((state) => state.error);
+  const pendingMutations = useExpenseStore((state) => state.pendingMutations);
+  const syncAll = useExpenseStore((state) => state.syncAll);
+  const pendingCount = pendingMutations.length;
 
   const sortedTransactions = [...transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -35,6 +38,30 @@ export default function HomeScreen() {
                 <Typography variant="body" color={theme.colors.expense} align="center">
                   {error}
                 </Typography>
+              </View>
+              <Spacer size="md" />
+            </Container>
+          )}
+
+          {pendingCount > 0 && (
+            <Container padding="lg" flex={0}>
+              <View style={styles.pendingCard}>
+                <View style={styles.pendingText}>
+                  <Typography variant="body" weight="semibold" color={theme.colors.warning}>
+                    {pendingCount === 1
+                      ? '1 alteração aguardando sincronização'
+                      : `${pendingCount} alterações aguardando sincronização`}
+                  </Typography>
+                  <Typography variant="caption" color={theme.colors.secondaryText}>
+                    O app tentará enviar automaticamente quando o servidor responder.
+                  </Typography>
+                </View>
+                <Button
+                  label="Tentar agora"
+                  variant="secondary"
+                  onPress={() => syncAll()}
+                  style={styles.retryButton}
+                />
               </View>
               <Spacer size="md" />
             </Container>
@@ -93,5 +120,20 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.expenseBorder,
-  }
+  },
+  pendingCard: {
+    backgroundColor: theme.colors.accentBackground,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.accent,
+    gap: theme.spacing.md,
+  },
+  pendingText: {
+    gap: theme.spacing.xs,
+  },
+  retryButton: {
+    height: 44,
+    alignSelf: 'flex-start',
+  },
 });
