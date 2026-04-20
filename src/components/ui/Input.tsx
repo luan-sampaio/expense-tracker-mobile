@@ -26,6 +26,8 @@ export function Input({ label, error, style, ...rest }: InputProps) {
           error ? styles.inputError : null,
           style,
         ]}
+        accessibilityLabel={rest.accessibilityLabel ?? label}
+        accessibilityHint={error}
         placeholderTextColor={theme.colors.secondaryText}
         {...rest}
       />
@@ -47,9 +49,10 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: theme.colors.surface,
-    height: 52,
+    minHeight: 52,
     borderRadius: theme.borderRadius.md,
     paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.sm,
     fontSize: theme.typography.sizes.body,
     color: theme.colors.primaryText,
     borderWidth: 1.5,

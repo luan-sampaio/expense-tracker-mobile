@@ -1,3 +1,4 @@
+import { impactFeedback } from '@/src/utils/haptics';
 import { theme } from '@/src/styles/theme';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -29,8 +30,14 @@ export function PeriodFilter({ selectedPeriod, onSelectPeriod }: PeriodFilterPro
               styles.periodButton,
               isSelected && styles.periodButtonSelected,
             ]}
-            onPress={() => onSelectPeriod(period.id)}
+            onPress={() => {
+              impactFeedback();
+              onSelectPeriod(period.id);
+            }}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={`Filtrar período ${period.label}`}
+            accessibilityState={{ selected: isSelected }}
           >
             <Typography
               variant="body"
@@ -49,12 +56,16 @@ export function PeriodFilter({ selectedPeriod, onSelectPeriod }: PeriodFilterPro
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     backgroundColor: theme.colors.surfaceSecondary,
     borderRadius: theme.borderRadius.md,
     padding: 4,
+    gap: 4,
   },
   periodButton: {
     flex: 1,
+    minWidth: 72,
+    minHeight: 44,
     paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.sm,

@@ -26,6 +26,7 @@ export function Typography({
           fontWeight: theme.typography.weights[weight],
           color,
           textAlign: align,
+          flexShrink: 1,
         },
         style,
       ]}

@@ -12,6 +12,7 @@ import { getCategoryMeta } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
+import { impactFeedback } from '@/src/utils/haptics';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -125,6 +126,7 @@ export default function HomeScreen() {
     searchQuery.trim().length > 0;
 
   const clearFilters = () => {
+    impactFeedback();
     setSelectedPeriod('all');
     setSelectedType('all');
     setSelectedCategory('all');
@@ -189,7 +191,10 @@ export default function HomeScreen() {
                     <Button
                       label="Tentar agora"
                       variant="secondary"
-                      onPress={() => syncAll()}
+                      onPress={() => {
+                        impactFeedback();
+                        syncAll();
+                      }}
                       style={styles.retryButton}
                     />
                   </View>
@@ -215,6 +220,7 @@ export default function HomeScreen() {
 
             <Input
               placeholder="Buscar por descrição"
+              accessibilityLabel="Buscar transações por descrição"
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoCapitalize="none"
@@ -240,8 +246,14 @@ export default function HomeScreen() {
                       styles.filterChip,
                       isSelected && styles.filterChipSelected,
                     ]}
-                    onPress={() => setSelectedType(filter.id)}
+                    onPress={() => {
+                      impactFeedback();
+                      setSelectedType(filter.id);
+                    }}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filtrar por ${filter.label.toLowerCase()}`}
+                    accessibilityState={{ selected: isSelected }}
                   >
                     <Typography
                       variant="caption"
@@ -266,8 +278,14 @@ export default function HomeScreen() {
                   styles.filterChip,
                   selectedCategory === 'all' && styles.filterChipSelected,
                 ]}
-                onPress={() => setSelectedCategory('all')}
+                onPress={() => {
+                  impactFeedback();
+                  setSelectedCategory('all');
+                }}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Mostrar todas as categorias"
+                accessibilityState={{ selected: selectedCategory === 'all' }}
               >
                 <Typography
                   variant="caption"
@@ -288,8 +306,14 @@ export default function HomeScreen() {
                       styles.filterChip,
                       isSelected && styles.filterChipSelected,
                     ]}
-                    onPress={() => setSelectedCategory(category)}
+                    onPress={() => {
+                      impactFeedback();
+                      setSelectedCategory(category);
+                    }}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filtrar categoria ${getCategoryMeta(category).label}`}
+                    accessibilityState={{ selected: isSelected }}
                   >
                     <Typography
                       variant="caption"
@@ -318,7 +342,7 @@ export default function HomeScreen() {
           {isLoading ? (
             <LoadingSpinner message="Sincronizando..." />
           ) : filteredTransactions.length === 0 ? (
-            <Container padding="lg" backgroundColor={theme.colors.surface} style={styles.emptyCard}>
+            <View style={styles.emptyCard}>
               <Typography variant="hero" align="center" style={styles.emptyIcon}>
                 {hasActiveFilters ? '🔎' : '💸'}
               </Typography>
@@ -339,7 +363,7 @@ export default function HomeScreen() {
                 onPress={hasActiveFilters ? clearFilters : () => router.push('/modal')}
                 style={styles.emptyButton}
               />
-            </Container>
+            </View>
           ) : (
             <View>
               {filteredTransactions.map((transaction) => (
@@ -359,9 +383,11 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   emptyCard: {
+    backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xxl,
     ...theme.shadows.sm,
   },
@@ -386,6 +412,7 @@ const styles = StyleSheet.create({
   },
   syncHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: theme.spacing.md,
@@ -396,8 +423,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   retryButton: {
-    height: 44,
-    alignSelf: 'flex-start',
+    minHeight: 44,
+    alignSelf: 'stretch',
     paddingHorizontal: theme.spacing.lg,
   },
   filterGroup: {
@@ -424,7 +451,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryBackground,
   },
   clearFiltersButton: {
-    height: 40,
+    minHeight: 44,
     alignSelf: 'flex-start',
     paddingHorizontal: 0,
   },

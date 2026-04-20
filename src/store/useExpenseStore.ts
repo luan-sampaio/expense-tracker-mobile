@@ -11,6 +11,7 @@ import {
 } from '../services/syncQueue';
 import { transactionsApi } from '../services/transactionsApi';
 import { ExpenseState, Transaction } from '../types';
+import { successFeedback } from '../utils/haptics';
 
 let isFlushingQueue = false;
 
@@ -119,6 +120,7 @@ export const useExpenseStore = create<ExpenseState>()(
 
         try {
           const pendingMutations = get().pendingMutations;
+          const hadPendingMutations = pendingMutations.length > 0;
           const syncResponse = await transactionsApi.sync(pendingMutations);
 
           if (syncResponse) {
@@ -141,6 +143,10 @@ export const useExpenseStore = create<ExpenseState>()(
             get().pendingMutations
           );
           const hasPendingMutations = get().pendingMutations.length > 0;
+
+          if (hadPendingMutations && !hasPendingMutations) {
+            successFeedback();
+          }
 
           set({
             transactions: localWithPending,

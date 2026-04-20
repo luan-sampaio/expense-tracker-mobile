@@ -8,6 +8,7 @@ import { getCategoriesByType } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
+import { errorFeedback, impactFeedback, successFeedback } from '@/src/utils/haptics';
 import { parseAmount, TransactionFormErrors, validateTransactionForm } from '@/src/utils/validation';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
@@ -51,6 +52,7 @@ export default function ModalScreen() {
   const [errors, setErrors] = useState<TransactionFormErrors>({ amount: '', description: '' });
 
   const showSaveFeedback = () => {
+    successFeedback();
     const message = isEditing
       ? 'Transação atualizada com sucesso.'
       : 'Transação adicionada com sucesso.';
@@ -75,6 +77,7 @@ export default function ModalScreen() {
   };
 
   const handleTypeChange = (nextType: TransactionType) => {
+    impactFeedback();
     const categories = getCategoriesByType(nextType);
     const categoryStillAvailable = categories.some((item) => item.id === category);
 
@@ -89,6 +92,7 @@ export default function ModalScreen() {
     const { errors: newErrors, isValid } = validateTransactionForm({ amount, description });
     setErrors(newErrors);
     if (!isValid) {
+      errorFeedback();
       Alert.alert('Erro', 'Por favor, preencha todos os campos corretamente.');
       return;
     }
@@ -129,6 +133,7 @@ export default function ModalScreen() {
       <View style={styles.typeSelector}>
         <Button 
           label="Despesa" 
+          accessibilityLabel="Selecionar tipo despesa"
           variant={type === 'expense' ? 'danger' : 'secondary'} 
           style={styles.typeButton}
           onPress={() => handleTypeChange('expense')}
@@ -136,6 +141,7 @@ export default function ModalScreen() {
         <Spacer size="md" horizontal />
         <Button 
           label="Receita" 
+          accessibilityLabel="Selecionar tipo receita"
           variant={type === 'income' ? 'primary' : 'secondary'} 
           style={styles.typeButton}
           onPress={() => handleTypeChange('income')}
@@ -145,6 +151,7 @@ export default function ModalScreen() {
 
       <Input 
         label="Valor (R$)" 
+        accessibilityLabel="Valor da transação"
         placeholder="0,00" 
         keyboardType="decimal-pad"
         value={amount}
@@ -162,6 +169,7 @@ export default function ModalScreen() {
 
       <Input 
         label="Descrição" 
+        accessibilityLabel="Descrição da transação"
         placeholder="Ex: Conta de Luz, Salário" 
         value={description}
         onChangeText={(text) => {
@@ -183,6 +191,7 @@ export default function ModalScreen() {
         <Spacer size="xs" />
         {Platform.OS === 'web' ? (
           <Input
+            accessibilityLabel="Data da transação"
             value={formatDateInputValue(date)}
             onChangeText={(value) => {
               const nextDate = createDateFromInput(value);
@@ -195,8 +204,13 @@ export default function ModalScreen() {
           <>
             <TouchableOpacity
               style={styles.dateButton}
-              onPress={() => setIsDatePickerVisible(true)}
+              onPress={() => {
+                impactFeedback();
+                setIsDatePickerVisible(true);
+              }}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`Selecionar data da transação, atual ${formatDateLabel(date)}`}
             >
               <Typography variant="body" weight="semibold">
                 {formatDateLabel(date)}

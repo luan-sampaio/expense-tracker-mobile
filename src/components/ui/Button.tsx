@@ -53,6 +53,9 @@ export function Button({
       ]}
       disabled={disabled || isLoading}
       activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={rest.accessibilityLabel ?? label}
+      accessibilityState={{ disabled: disabled || isLoading, busy: isLoading }}
       {...rest}
     >
       {isLoading ? (
@@ -73,10 +76,11 @@ export function Button({
 
 const styles = StyleSheet.create({
   button: {
-    height: 52,
+    minHeight: 52,
     borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: theme.spacing.sm,
     paddingHorizontal: theme.spacing.xl,
     ...theme.shadows.sm,
   },

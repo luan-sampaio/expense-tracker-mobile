@@ -1,6 +1,7 @@
 import { getCategoriesByType } from '@/src/constants/categories';
 import { theme } from '@/src/styles/theme';
 import { TransactionType } from '@/src/types';
+import { impactFeedback } from '@/src/utils/haptics';
 import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { Typography } from './Typography';
@@ -37,8 +38,14 @@ export function CategoryPicker({ selectedCategory, onSelectCategory, type }: Cat
                 isSelected && styles.categoryItemSelected,
                 isSelected && { borderColor: category.color },
               ]}
-              onPress={() => onSelectCategory(category.id)}
+              onPress={() => {
+                impactFeedback();
+                onSelectCategory(category.id);
+              }}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Selecionar categoria ${category.label}`}
+              accessibilityState={{ selected: isSelected }}
             >
               <Typography variant="heading" style={styles.icon}>
                 {category.icon}
@@ -79,7 +86,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     borderWidth: 2,
     borderColor: 'transparent',
-    minWidth: 80,
+    minWidth: 88,
+    minHeight: 88,
   },
   categoryItemSelected: {
     ...theme.shadows.sm,

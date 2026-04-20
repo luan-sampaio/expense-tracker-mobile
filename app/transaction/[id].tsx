@@ -7,6 +7,7 @@ import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { PendingMutation, Transaction } from '@/src/types';
 import { formatCurrency, formatDate } from '@/src/utils/formatters';
+import { warningFeedback } from '@/src/utils/haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
@@ -119,6 +120,7 @@ export default function TransactionDetailsScreen() {
         text: 'Apagar',
         style: 'destructive',
         onPress: () => {
+          warningFeedback();
           removeTransaction(transaction.id);
           router.back();
         },
@@ -142,7 +144,7 @@ export default function TransactionDetailsScreen() {
             </Typography>
           </View>
           <Spacer size="md" />
-          <Typography variant="title" weight="bold" align="center">
+          <Typography variant="title" weight="bold" align="center" numberOfLines={3}>
             {transaction.description}
           </Typography>
           <Spacer size="xs" />
@@ -231,10 +233,12 @@ const styles = StyleSheet.create({
   },
   actions: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: theme.spacing.md,
   },
   actionButton: {
     flex: 1,
+    minWidth: 132,
   },
   emptyState: {
     backgroundColor: theme.colors.surface,
@@ -243,4 +247,3 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
 });
-

@@ -7,13 +7,13 @@ import { useFilteredTransactions } from '@/src/hooks/useFilteredTransactions';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency } from '@/src/utils/formatters';
 import React, { useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
-
-const screenWidth = Dimensions.get('window').width;
 
 export default function ExploreScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('month');
+  const { width } = useWindowDimensions();
+  const chartWidth = Math.max(width - theme.spacing.lg * 2, 280);
   const filteredTransactions = useFilteredTransactions(selectedPeriod);
 
   const expensesByCategory = filteredTransactions
@@ -77,7 +77,7 @@ export default function ExploreScreen() {
           <View style={styles.chartWrapper}>
             <PieChart
               data={chartData}
-              width={screenWidth}
+              width={chartWidth}
               height={220}
               chartConfig={chartConfig}
               accessor={"population"}
@@ -118,6 +118,7 @@ const styles = StyleSheet.create({
   chartWrapper: {
     alignItems: 'center',
     marginVertical: theme.spacing.md,
+    overflow: 'hidden',
   },
   emptyCard: {
     backgroundColor: theme.colors.surface,

@@ -70,7 +70,7 @@ export function BalanceHeader() {
               {topCategoryLabel}
             </Typography>
           </View>
-          <View style={styles.insightWide}>
+          <View style={styles.insight}>
             <Typography variant="caption" color={theme.colors.secondaryText}>
               Comparação mensal
             </Typography>
@@ -92,19 +92,21 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.xl,
+    borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     alignItems: 'center',
     ...theme.shadows.md,
   },
   row: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
     gap: theme.spacing.md,
   },
   miniCard: {
     flex: 1,
+    minWidth: 132,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
@@ -119,15 +121,9 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   insight: {
-    backgroundColor: theme.colors.surfaceSecondary,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-    gap: theme.spacing.xs,
-  },
-  insightWide: {
-    backgroundColor: theme.colors.infoBackground,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.borderLight,
+    paddingTop: theme.spacing.md,
     gap: theme.spacing.xs,
   },
 });

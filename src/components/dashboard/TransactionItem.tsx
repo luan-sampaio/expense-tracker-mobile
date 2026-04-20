@@ -2,7 +2,8 @@ import { getCategoryMeta } from '@/src/constants/categories';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { Transaction } from '@/src/types';
-import { formatCurrency } from '@/src/utils/formatters';
+import { formatCurrency, formatShortDate } from '@/src/utils/formatters';
+import { warningFeedback } from '@/src/utils/haptics';
 import { router } from 'expo-router';
 import React from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -21,12 +22,19 @@ export function TransactionItem({ transaction }: Props) {
 
   const formattedAmount = formatCurrency(transaction.amount);
 
-  const dateStr = new Date(transaction.date).toLocaleDateString('pt-BR');
+  const dateStr = formatShortDate(transaction.date);
 
   const handleDelete = () => {
     Alert.alert('Apagar transação?', 'Essa ação não pode ser desfeita.', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Apagar', style: 'destructive', onPress: () => removeTransaction(transaction.id) },
+      {
+        text: 'Apagar',
+        style: 'destructive',
+        onPress: () => {
+          warningFeedback();
+          removeTransaction(transaction.id);
+        },
+      },
     ]);
   };
 
@@ -57,6 +65,8 @@ export function TransactionItem({ transaction }: Props) {
         style={styles.editAction} 
         onPress={handleEdit}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`Editar ${transaction.description}`}
       >
         <Typography variant="body" weight="bold" color={theme.colors.background}>
           Editar
@@ -71,6 +81,8 @@ export function TransactionItem({ transaction }: Props) {
         style={styles.deleteAction} 
         onPress={handleDelete}
         activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={`Apagar ${transaction.description}`}
       >
         <Typography variant="body" weight="bold" color={theme.colors.background}>
           Apagar
@@ -91,6 +103,8 @@ export function TransactionItem({ transaction }: Props) {
         style={styles.container}
         onPress={handleOpenDetails}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`Abrir detalhes de ${transaction.description}, ${categoryMeta.label}, ${formattedAmount}`}
       >
         <View style={styles.leftContent}>
           <View style={[
@@ -102,12 +116,12 @@ export function TransactionItem({ transaction }: Props) {
              </Typography>
           </View>
           <Spacer horizontal size="md" />
-          <View>
-            <Typography variant="body" weight="semibold">
+          <View style={styles.textContent}>
+            <Typography variant="body" weight="semibold" numberOfLines={2}>
               {transaction.description}
             </Typography>
             <Spacer size="xs" />
-            <Typography variant="caption" color={theme.colors.secondaryText}>
+            <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
               {dateStr} • {categoryMeta.label}
             </Typography>
           </View>
@@ -117,6 +131,8 @@ export function TransactionItem({ transaction }: Props) {
           variant="body" 
           weight="semibold" 
           color={isIncome ? theme.colors.income : theme.colors.primaryText}
+          align="right"
+          style={styles.amount}
         >
           {isIncome ? '+' : '-'}{formattedAmount}
         </Typography>
@@ -135,6 +151,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 72,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: theme.colors.surface,
@@ -142,8 +159,11 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   leftContent: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingRight: theme.spacing.md,
   },
   iconPlaceholder: {
     width: 48,
@@ -151,6 +171,13 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  textContent: {
+    flex: 1,
+    minWidth: 0,
+  },
+  amount: {
+    maxWidth: 128,
   },
   editAction: {
     backgroundColor: theme.colors.primary,
