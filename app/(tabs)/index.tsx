@@ -10,7 +10,7 @@ import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { router } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 function formatLastSyncAt(lastSyncAt: string | null) {
   if (!lastSyncAt) return 'Ainda não sincronizado';
@@ -31,9 +31,7 @@ export default function HomeScreen() {
   const syncStatus = useExpenseStore((state) => state.syncStatus);
   const lastSyncAt = useExpenseStore((state) => state.lastSyncAt);
   const syncAll = useExpenseStore((state) => state.syncAll);
-  const discardPendingMutations = useExpenseStore((state) => state.discardPendingMutations);
   const pendingCount = pendingMutations.length;
-  const failedMutation = pendingMutations.find((mutation) => mutation.lastError);
   const statusConfig = {
     online: {
       label: 'Online',
@@ -60,21 +58,6 @@ export default function HomeScreen() {
       border: theme.colors.incomeBorder,
     },
   }[syncStatus];
-
-  const confirmDiscardPendingMutations = () => {
-    Alert.alert(
-      'Descartar fila pendente?',
-      'As alterações que ainda não chegaram ao servidor serão perdidas. O app vai recarregar os dados do backend em seguida.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Descartar',
-          style: 'destructive',
-          onPress: discardPendingMutations,
-        },
-      ]
-    );
-  };
 
   const sortedTransactions = [...transactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -134,23 +117,11 @@ export default function HomeScreen() {
                       : `${pendingCount} alterações aguardando sincronização`}
                   </Typography>
 
-                  {failedMutation?.lastError && (
-                    <Typography variant="caption" color={theme.colors.expense}>
-                      {failedMutation.lastError}
-                    </Typography>
-                  )}
-
                   <View style={styles.syncActions}>
                     <Button
                       label="Tentar agora"
                       variant="secondary"
                       onPress={() => syncAll()}
-                      style={styles.retryButton}
-                    />
-                    <Button
-                      label="Descartar fila"
-                      variant="ghost"
-                      onPress={confirmDiscardPendingMutations}
                       style={styles.retryButton}
                     />
                   </View>

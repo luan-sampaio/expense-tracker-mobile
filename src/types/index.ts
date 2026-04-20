@@ -20,9 +20,6 @@ export interface Transaction {
 interface PendingMutationBase {
   id: string;
   createdAt: string;
-  attempts: number;
-  lastAttemptAt: string | null;
-  lastError: string | null;
 }
 
 export type PendingMutation =
@@ -48,6 +45,5 @@ export interface ExpenseState {
   removeTransaction: (id: string) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   clearAll: () => void;
-  discardPendingMutations: () => void;
   syncAll: (options?: { silent?: boolean }) => Promise<void>;
 }
