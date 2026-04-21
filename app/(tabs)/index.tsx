@@ -5,7 +5,6 @@ import { AppDialog } from '@/src/components/ui/AppDialog';
 import { Button } from '@/src/components/ui/Button';
 import { Container } from '@/src/components/ui/Container';
 import { Input } from '@/src/components/ui/Input';
-import { LoadingSpinner } from '@/src/components/ui/LoadingSpinner';
 import { Period, PeriodFilter } from '@/src/components/ui/PeriodFilter';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
@@ -21,7 +20,7 @@ import { impactFeedback, successFeedback } from '@/src/utils/haptics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 type TypeFilter = 'all' | TransactionType;
@@ -42,6 +41,24 @@ function formatLastSyncAt(lastSyncAt: string | null) {
     hour: '2-digit',
     minute: '2-digit',
   })}`;
+}
+
+function TransactionSkeletonList() {
+  return (
+    <View style={styles.skeletonList}>
+      {[0, 1, 2].map((item) => (
+        <View key={item} style={styles.skeletonCard}>
+          <View style={styles.skeletonIcon} />
+          <View style={styles.skeletonText}>
+            <View style={styles.skeletonLineLarge} />
+            <View style={styles.skeletonLineSmall} />
+            <View style={styles.skeletonLineTiny} />
+          </View>
+          <View style={styles.skeletonAmount} />
+        </View>
+      ))}
+    </View>
+  );
 }
 
 export default function HomeScreen() {
@@ -148,9 +165,28 @@ export default function HomeScreen() {
       {error && (
         <View style={styles.section}>
           <View style={styles.errorCard}>
-            <Typography variant="body" color={theme.colors.expense} align="center">
-              {error}
-            </Typography>
+            <View style={styles.errorHeader}>
+              <View style={styles.errorIcon}>
+                <MaterialIcons name="wifi-off" size={20} color={theme.colors.expense} />
+              </View>
+              <View style={styles.errorText}>
+                <Typography variant="body" weight="semibold" color={theme.colors.expense}>
+                  Não foi possível sincronizar
+                </Typography>
+                <Typography variant="caption" color={theme.colors.secondaryText}>
+                  {error}
+                </Typography>
+              </View>
+            </View>
+            <Button
+              label="Tentar novamente"
+              variant="secondary"
+              onPress={() => {
+                impactFeedback();
+                syncAll();
+              }}
+              style={styles.errorRetryButton}
+            />
           </View>
           <Spacer size="md" />
         </View>
@@ -178,11 +214,15 @@ export default function HomeScreen() {
           >
             <View style={styles.syncHeader}>
               <View style={styles.syncTitle}>
-                <MaterialIcons
-                  name={syncStatus === 'offline' ? 'cloud-off' : 'sync'}
-                  size={20}
-                  color={statusConfig.color}
-                />
+                {syncStatus === 'syncing' ? (
+                  <ActivityIndicator size="small" color={statusConfig.color} />
+                ) : (
+                  <MaterialIcons
+                    name={syncStatus === 'offline' ? 'cloud-off' : 'sync'}
+                    size={20}
+                    color={statusConfig.color}
+                  />
+                )}
                 <Typography variant="body" weight="semibold" color={statusConfig.color}>
                   {statusConfig.label}
                 </Typography>
@@ -424,7 +464,7 @@ export default function HomeScreen() {
 
   const listEmpty = isLoading ? (
     <View style={styles.section}>
-      <LoadingSpinner message="Sincronizando..." />
+      <TransactionSkeletonList />
     </View>
   ) : (
     <View style={[styles.section, styles.emptyCard]}>
@@ -508,10 +548,32 @@ const styles = StyleSheet.create({
   },
   errorCard: {
     backgroundColor: theme.colors.expenseBackground,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.expenseBorder,
+    gap: theme.spacing.md,
+  },
+  errorHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: theme.spacing.md,
+  },
+  errorIcon: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surface,
+  },
+  errorText: {
+    flex: 1,
+    minWidth: 0,
+    gap: theme.spacing.xs,
+  },
+  errorRetryButton: {
+    minHeight: 44,
   },
   syncCard: {
     padding: theme.spacing.md,
@@ -665,5 +727,53 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: theme.borderRadius.sm,
     backgroundColor: theme.colors.surface,
+  },
+  skeletonList: {
+    gap: theme.spacing.sm,
+  },
+  skeletonCard: {
+    minHeight: 84,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
+  },
+  skeletonIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  skeletonText: {
+    flex: 1,
+    gap: theme.spacing.sm,
+  },
+  skeletonLineLarge: {
+    width: '72%',
+    height: 12,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  skeletonLineSmall: {
+    width: '48%',
+    height: 10,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  skeletonLineTiny: {
+    width: '34%',
+    height: 10,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  skeletonAmount: {
+    width: 76,
+    height: 14,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surfaceSecondary,
   },
 });
