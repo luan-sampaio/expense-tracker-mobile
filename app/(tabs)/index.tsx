@@ -107,11 +107,13 @@ export default function HomeScreen() {
     });
   }, [transactions, searchQuery, selectedCategory, selectedPeriod, selectedType]);
 
-  const hasActiveFilters =
-    selectedPeriod !== 'all' ||
-    selectedType !== 'all' ||
-    selectedCategory !== 'all' ||
-    searchQuery.trim().length > 0;
+  const activeFilterCount = [
+    selectedPeriod !== 'all',
+    selectedType !== 'all',
+    selectedCategory !== 'all',
+    searchQuery.trim().length > 0,
+  ].filter(Boolean).length;
+  const hasActiveFilters = activeFilterCount > 0;
 
   const clearFilters = () => {
     impactFeedback();
@@ -203,10 +205,44 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.section}>
-        <Typography variant="title" weight="semibold">
-          Transações Recentes
-        </Typography>
-        <Spacer size="lg" />
+        <View style={styles.transactionsHeader}>
+          <View style={styles.transactionsTitle}>
+            <Typography variant="title" weight="semibold">
+              Transações Recentes
+            </Typography>
+            {hasActiveFilters && (
+              <Typography variant="caption" color={theme.colors.secondaryText}>
+                {activeFilterCount === 1
+                  ? '1 filtro ativo'
+                  : `${activeFilterCount} filtros ativos`}
+              </Typography>
+            )}
+          </View>
+
+          {hasActiveFilters && (
+            <TouchableOpacity
+              style={styles.clearFiltersPill}
+              onPress={clearFilters}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={
+                activeFilterCount === 1
+                  ? 'Limpar 1 filtro ativo'
+                  : `Limpar ${activeFilterCount} filtros ativos`
+              }
+            >
+              <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                Limpar
+              </Typography>
+              <View style={styles.clearFiltersBadge}>
+                <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                  {activeFilterCount}
+                </Typography>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+        <Spacer size="md" />
 
             <Input
               placeholder="Buscar por descrição"
@@ -316,17 +352,6 @@ export default function HomeScreen() {
                 );
               })}
             </ScrollView>
-            {hasActiveFilters && (
-              <>
-                <Spacer size="sm" />
-                <Button
-                  label="Limpar filtros"
-                  variant="ghost"
-                  onPress={clearFilters}
-                  style={styles.clearFiltersButton}
-                />
-              </>
-            )}
             <Spacer size="lg" />
       </View>
     </>
@@ -429,6 +454,17 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     paddingHorizontal: theme.spacing.lg,
   },
+  transactionsHeader: {
+    minHeight: 48,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  transactionsTitle: {
+    flex: 1,
+    gap: theme.spacing.xs,
+  },
   filterGroup: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -452,9 +488,23 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     backgroundColor: theme.colors.primaryBackground,
   },
-  clearFiltersButton: {
+  clearFiltersPill: {
     minHeight: 44,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryBackground,
+  },
+  clearFiltersBadge: {
+    minWidth: 22,
+    minHeight: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.surface,
   },
 });
