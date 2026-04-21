@@ -294,6 +294,7 @@ const styles = StyleSheet.create({
   },
   detailRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     padding: theme.spacing.lg,
@@ -303,6 +304,7 @@ const styles = StyleSheet.create({
   },
   detailValue: {
     flex: 1,
+    minWidth: 160,
   },
   syncPill: {
     minHeight: 52,
@@ -325,11 +327,11 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     flex: 1,
-    minWidth: 132,
+    minWidth: 144,
   },
   deleteButton: {
     flex: 1,
-    minWidth: 132,
+    minWidth: 144,
     backgroundColor: theme.colors.expenseBackground,
     borderWidth: 1,
     borderColor: theme.colors.expenseBorder,

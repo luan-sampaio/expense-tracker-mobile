@@ -14,7 +14,9 @@ import { PieChart } from 'react-native-chart-kit';
 export default function ExploreScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('month');
   const { width } = useWindowDimensions();
-  const chartWidth = Math.max(width - theme.spacing.lg * 2, 280);
+  const isNarrowScreen = width <= 380;
+  const chartWidth = Math.max(width - theme.spacing.lg * 2, 260);
+  const chartHeight = isNarrowScreen ? 190 : 220;
   const filteredTransactions = useFilteredTransactions(selectedPeriod);
 
   const expensesByCategory = useMemo(
@@ -80,13 +82,29 @@ export default function ExploreScreen() {
             <PieChart
               data={chartData}
               width={chartWidth}
-              height={220}
+              height={chartHeight}
               chartConfig={chartConfig}
               accessor={"population"}
               backgroundColor={"transparent"}
-              paddingLeft={"15"}
+              paddingLeft={isNarrowScreen ? "4" : "15"}
+              hasLegend={!isNarrowScreen}
               absolute 
             />
+            {isNarrowScreen && (
+              <View style={styles.legendList}>
+                {chartData.map((item) => (
+                  <View key={item.name} style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                    <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1} style={styles.legendName}>
+                      {item.name}
+                    </Typography>
+                    <Typography variant="caption" weight="semibold" color={theme.colors.primaryText}>
+                      {formatCurrency(item.population)}
+                    </Typography>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         )}
 
@@ -121,6 +139,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: theme.spacing.md,
     overflow: 'hidden',
+    paddingHorizontal: theme.spacing.lg,
+  },
+  legendList: {
+    alignSelf: 'stretch',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.md,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendName: {
+    flex: 1,
+    minWidth: 0,
   },
   emptyCard: {
     backgroundColor: theme.colors.surface,

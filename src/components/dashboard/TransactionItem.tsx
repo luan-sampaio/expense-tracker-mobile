@@ -260,8 +260,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.warning,
   },
   amountBlock: {
-    minWidth: 108,
-    maxWidth: 128,
+    minWidth: 92,
+    maxWidth: 116,
     alignItems: 'flex-end',
     gap: theme.spacing.xs,
   },

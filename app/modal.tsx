@@ -380,11 +380,13 @@ const styles = StyleSheet.create({
   },
   typeSelector: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     width: '100%',
     gap: theme.spacing.md,
   },
   typeOption: {
     flex: 1,
+    minWidth: 132,
     minHeight: 64,
     flexDirection: 'row',
     alignItems: 'center',
@@ -404,7 +406,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.incomeBackground,
   },
   dateButton: {
-    height: 52,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
