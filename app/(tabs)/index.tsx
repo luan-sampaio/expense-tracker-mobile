@@ -115,6 +115,7 @@ export default function HomeScreen() {
     },
   }[syncStatus];
   const shouldShowCompactSync = syncStatus === 'synced' && pendingCount === 0 && !error;
+  const shouldHideSyncCard = syncStatus === 'offline' && pendingCount === 0 && Boolean(error);
 
   const categoryFilters = useMemo(() => {
     return getTransactionCategoryIds(transactions);
@@ -201,7 +202,7 @@ export default function HomeScreen() {
             </Typography>
           </View>
         </View>
-      ) : (
+      ) : !shouldHideSyncCard ? (
         <View style={styles.section}>
           <View
             style={[
@@ -263,7 +264,7 @@ export default function HomeScreen() {
             )}
           </View>
         </View>
-      )}
+      ) : null}
 
       <BalanceHeader />
 
