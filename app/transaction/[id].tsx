@@ -11,6 +11,7 @@ import { theme } from '@/src/styles/theme';
 import { PendingMutation, Transaction } from '@/src/types';
 import { formatCurrency, formatDate } from '@/src/utils/formatters';
 import { successFeedback, warningFeedback } from '@/src/utils/haptics';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -24,42 +25,54 @@ function getSyncLabel(transaction: Transaction, pendingMutations: PendingMutatio
   if (!pending) {
     return {
       label: 'Sincronizada',
-      description: 'Esta transação já está salva no servidor.',
+      description: 'Salva no servidor.',
       color: theme.colors.success,
       backgroundColor: theme.colors.incomeBackground,
+      iconName: 'cloud-done' as const,
     };
   }
 
   if (pending.type === 'delete') {
     return {
       label: 'Remoção pendente',
-      description: 'A exclusão será enviada quando a conexão voltar.',
+      description: 'Será removida quando a conexão voltar.',
       color: theme.colors.expense,
       backgroundColor: theme.colors.expenseBackground,
+      iconName: 'cloud-off' as const,
     };
   }
 
   return {
     label: pending.type === 'create' ? 'Criação pendente' : 'Edição pendente',
-    description: 'A alteração será sincronizada automaticamente.',
+    description: 'Sincronização automática pendente.',
     color: theme.colors.warning,
     backgroundColor: theme.colors.accentBackground,
+    iconName: 'sync' as const,
   };
 }
 
 function DetailRow({
   label,
   value,
+  valueColor = theme.colors.primaryText,
 }: {
   label: string;
   value: string;
+  valueColor?: string;
 }) {
   return (
     <View style={styles.detailRow}>
       <Typography variant="caption" color={theme.colors.secondaryText}>
         {label}
       </Typography>
-      <Typography variant="body" weight="semibold">
+      <Typography
+        variant="body"
+        weight="semibold"
+        color={valueColor}
+        align="right"
+        style={styles.detailValue}
+        numberOfLines={3}
+      >
         {value}
       </Typography>
     </View>
@@ -145,51 +158,78 @@ export default function TransactionDetailsScreen() {
       <Stack.Screen options={{ title: 'Detalhes' }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <CategoryIcon category={categoryMeta} size="lg" />
-          <Spacer size="md" />
+          <View style={styles.headerTop}>
+            <CategoryIcon category={categoryMeta} size="lg" />
+            <View style={[styles.typeBadge, {
+              backgroundColor: isIncome ? theme.colors.incomeBackground : theme.colors.expenseBackground,
+            }]}>
+              <Typography
+                variant="caption"
+                weight="semibold"
+                color={isIncome ? theme.colors.income : theme.colors.expense}
+              >
+                {isIncome ? 'Receita' : 'Despesa'}
+              </Typography>
+            </View>
+          </View>
+          <Spacer size="lg" />
+          <Typography
+            variant="hero"
+            weight="bold"
+            color={isIncome ? theme.colors.income : theme.colors.expense}
+            align="center"
+            numberOfLines={1}
+            style={styles.amount}
+          >
+            {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+          </Typography>
+          <Spacer size="sm" />
           <Typography variant="title" weight="bold" align="center" numberOfLines={3}>
             {transaction.description}
           </Typography>
           <Spacer size="xs" />
-          <Typography
-            variant="heading"
-            weight="bold"
-            color={isIncome ? theme.colors.income : theme.colors.expense}
-          >
-            {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
+          <Typography variant="body" color={categoryMeta.color} weight="semibold" align="center">
+            {categoryMeta.label}
           </Typography>
+        </View>
+
+        <Spacer size="lg" />
+
+        <View style={[styles.syncPill, { backgroundColor: syncStatus.backgroundColor }]}>
+          <MaterialIcons name={syncStatus.iconName} size={18} color={syncStatus.color} />
+          <View style={styles.syncText}>
+            <Typography variant="caption" weight="semibold" color={syncStatus.color}>
+              {syncStatus.label}
+            </Typography>
+            <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
+              {syncStatus.description}
+            </Typography>
+          </View>
         </View>
 
         <Spacer size="lg" />
 
         <View style={styles.section}>
-          <DetailRow label="Tipo" value={isIncome ? 'Receita' : 'Despesa'} />
-          <DetailRow label="Categoria" value={categoryMeta.label} />
+          <DetailRow
+            label="Tipo"
+            value={isIncome ? 'Receita' : 'Despesa'}
+            valueColor={isIncome ? theme.colors.income : theme.colors.expense}
+          />
+          <DetailRow label="Categoria" value={categoryMeta.label} valueColor={categoryMeta.color} />
           <DetailRow label="Data" value={formatDate(transaction.date)} />
+          <DetailRow label="Descrição" value={transaction.description} />
           <DetailRow label="Identificador" value={transaction.id} />
-        </View>
-
-        <Spacer size="lg" />
-
-        <View style={[styles.syncBox, { backgroundColor: syncStatus.backgroundColor }]}>
-          <Typography variant="body" weight="semibold" color={syncStatus.color}>
-            {syncStatus.label}
-          </Typography>
-          <Spacer size="xs" />
-          <Typography variant="caption" color={theme.colors.secondaryText}>
-            {syncStatus.description}
-          </Typography>
         </View>
 
         <Spacer size="xl" />
 
         <View style={styles.actions}>
-          <Button label="Editar" onPress={handleEdit} style={styles.actionButton} />
+          <Button label="Editar" onPress={handleEdit} style={styles.primaryAction} />
           <Button
             label="Apagar"
-            variant="danger"
+            variant="ghost"
             onPress={handleDelete}
-            style={styles.actionButton}
+            style={styles.deleteAction}
           />
         </View>
       </ScrollView>
@@ -227,11 +267,24 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   header: {
-    alignItems: 'center',
     backgroundColor: theme.colors.surface,
     borderRadius: theme.borderRadius.lg,
     padding: theme.spacing.xl,
     ...theme.shadows.sm,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  typeBadge: {
+    minHeight: 32,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
+  },
+  amount: {
+    width: '100%',
   },
   section: {
     backgroundColor: theme.colors.surface,
@@ -240,25 +293,45 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.borderLight,
-    gap: theme.spacing.xs,
+    gap: theme.spacing.lg,
   },
-  syncBox: {
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+  detailValue: {
+    flex: 1,
+  },
+  syncPill: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    paddingHorizontal: theme.spacing.md,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
+  },
+  syncText: {
+    flex: 1,
+    minWidth: 0,
   },
   actions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.md,
   },
-  actionButton: {
+  primaryAction: {
     flex: 1,
     minWidth: 132,
+  },
+  deleteAction: {
+    flex: 1,
+    minWidth: 132,
+    borderWidth: 1,
+    borderColor: theme.colors.expenseBorder,
   },
   emptyState: {
     backgroundColor: theme.colors.surface,
