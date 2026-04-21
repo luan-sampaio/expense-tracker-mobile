@@ -45,9 +45,12 @@ export interface ExpenseState {
   error: string | null;
   lastSyncAt: string | null;
   syncStatus: SyncStatus;
+  isUsingMockData: boolean;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   removeTransaction: (id: string) => void;
   updateTransaction: (id: string, transaction: Partial<Transaction>) => void;
   clearAll: () => void;
+  loadMockData: () => void;
+  clearMockData: () => void;
   syncAll: (options?: { silent?: boolean }) => Promise<void>;
 }

@@ -33,6 +33,11 @@ yarn-error.*
 # local env files
 .env*.local
 
+# local mock data
+src/mocks/*.local.json
+src/mocks/*.local.ts
+src/mocks/local*.ts
+
 # typescript
 *.tsbuildinfo
 
