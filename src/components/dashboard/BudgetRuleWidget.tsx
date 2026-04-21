@@ -1,4 +1,4 @@
-import { sumTransactionsByType } from '@/src/domain/transactions';
+import { isTransactionWithinPeriod, sumTransactionsByType } from '@/src/domain/transactions';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency } from '@/src/utils/formatters';
@@ -50,12 +50,15 @@ export function BudgetRuleWidget() {
   const transactions = useExpenseStore((state) => state.transactions);
 
   const budget = useMemo(() => {
-    const income = sumTransactionsByType(transactions, 'income');
+    const monthTransactions = transactions.filter((transaction) => {
+      return isTransactionWithinPeriod(transaction.date, 'month');
+    });
+    const income = sumTransactionsByType(monthTransactions, 'income');
     let spentNeeds = 0;
     let spentWants = 0;
     let spentSavings = 0;
 
-    transactions.filter((t) => t.type === 'expense').forEach((t) => {
+    monthTransactions.filter((t) => t.type === 'expense').forEach((t) => {
       const cat = t.category.toLowerCase();
       const amount = t.amount;
       const isNeed = NEEDS_KEYWORDS.some((k) => cat.includes(k));
@@ -85,7 +88,7 @@ export function BudgetRuleWidget() {
         Regra 50/30/20
       </Typography>
       <Typography variant="caption" color={theme.colors.secondaryText}>
-        Como seu gasto atual consome suas receitas:
+        Distribuição do mês atual com base nas suas receitas:
       </Typography>
       <Spacer size="md" />
       
