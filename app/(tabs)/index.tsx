@@ -49,6 +49,7 @@ export default function HomeScreen() {
   const [selectedType, setSelectedType] = useState<TypeFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   const [isDeletedDialogVisible, setIsDeletedDialogVisible] = useState(false);
   const {
     transactions,
@@ -125,6 +126,7 @@ export default function HomeScreen() {
     setSelectedType('all');
     setSelectedCategory('all');
     setSearchQuery('');
+    setIsFiltersExpanded(false);
   };
 
   const renderTransaction: ListRenderItem<Transaction> = ({ item }) => (
@@ -270,117 +272,151 @@ export default function HomeScreen() {
               </TouchableOpacity>
             )}
           </View>
-          <Spacer size="md" />
+          <Spacer size="sm" />
 
-            <Input
-              placeholder="Buscar por descrição"
-              accessibilityLabel="Buscar transações por descrição"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-              returnKeyType="search"
-            />
-            <Spacer size="md" />
-
-            <PeriodFilter
-              selectedPeriod={selectedPeriod}
-              onSelectPeriod={setSelectedPeriod}
-            />
-            <Spacer size="md" />
-
-            <View style={styles.filterGroup}>
-              {TYPE_FILTERS.map((filter) => {
-                const isSelected = selectedType === filter.id;
-
-                return (
-                  <TouchableOpacity
-                    key={filter.id}
-                    style={[
-                      styles.filterChip,
-                      isSelected && styles.filterChipSelected,
-                    ]}
-                    onPress={() => {
-                      impactFeedback();
-                      setSelectedType(filter.id);
-                    }}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Filtrar por ${filter.label.toLowerCase()}`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <Typography
-                      variant="caption"
-                      weight={isSelected ? 'semibold' : 'regular'}
-                      color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
-                    >
-                      {filter.label}
-                    </Typography>
-                  </TouchableOpacity>
-                );
-              })}
+          <View style={styles.filterToolbar}>
+            <View style={styles.searchBox}>
+              <MaterialIcons name="search" size={20} color={theme.colors.secondaryText} />
+              <Input
+                placeholder="Buscar descrição"
+                accessibilityLabel="Buscar transações por descrição"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="search"
+                style={styles.searchInput}
+              />
             </View>
-            <Spacer size="sm" />
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.categoryFilterContent}
+            <TouchableOpacity
+              style={[
+                styles.filterToggle,
+                (isFiltersExpanded || activeFilterCount > 0) && styles.filterToggleActive,
+              ]}
+              onPress={() => {
+                impactFeedback();
+                setIsFiltersExpanded((current) => !current);
+              }}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={isFiltersExpanded ? 'Ocultar filtros avançados' : 'Mostrar filtros avançados'}
             >
-              <TouchableOpacity
-                style={[
-                  styles.filterChip,
-                  selectedCategory === 'all' && styles.filterChipSelected,
-                ]}
-                onPress={() => {
-                  impactFeedback();
-                  setSelectedCategory('all');
-                }}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel="Mostrar todas as categorias"
-                accessibilityState={{ selected: selectedCategory === 'all' }}
-              >
-                <Typography
-                  variant="caption"
-                  weight={selectedCategory === 'all' ? 'semibold' : 'regular'}
-                  color={selectedCategory === 'all' ? theme.colors.primary : theme.colors.secondaryText}
-                >
-                  Todas categorias
-                </Typography>
-              </TouchableOpacity>
+              <MaterialIcons
+                name="tune"
+                size={20}
+                color={(isFiltersExpanded || activeFilterCount > 0) ? theme.colors.primary : theme.colors.secondaryText}
+              />
+              {activeFilterCount > 0 && (
+                <View style={styles.filterCountBadge}>
+                  <Typography variant="caption" weight="bold" color={theme.colors.surface}>
+                    {activeFilterCount}
+                  </Typography>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
 
-              {categoryFilters.map((category) => {
-                const isSelected = selectedCategory === category;
+          {isFiltersExpanded && (
+            <View style={styles.advancedFilters}>
+              <PeriodFilter
+                selectedPeriod={selectedPeriod}
+                onSelectPeriod={setSelectedPeriod}
+              />
 
-                return (
-                  <TouchableOpacity
-                    key={category}
-                    style={[
-                      styles.filterChip,
-                      isSelected && styles.filterChipSelected,
-                    ]}
-                    onPress={() => {
-                      impactFeedback();
-                      setSelectedCategory(category);
-                    }}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Filtrar categoria ${getCategoryMeta(category).label}`}
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <Typography
-                      variant="caption"
-                      weight={isSelected ? 'semibold' : 'regular'}
-                      color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
+              <View style={styles.filterGroup}>
+                {TYPE_FILTERS.map((filter) => {
+                  const isSelected = selectedType === filter.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={filter.id}
+                      style={[
+                        styles.filterChip,
+                        isSelected && styles.filterChipSelected,
+                      ]}
+                      onPress={() => {
+                        impactFeedback();
+                        setSelectedType(filter.id);
+                      }}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Filtrar por ${filter.label.toLowerCase()}`}
+                      accessibilityState={{ selected: isSelected }}
                     >
-                      {getCategoryMeta(category).label}
-                    </Typography>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <Spacer size="lg" />
+                      <Typography
+                        variant="caption"
+                        weight={isSelected ? 'semibold' : 'regular'}
+                        color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
+                      >
+                        {filter.label}
+                      </Typography>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.categoryFilterContent}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.filterChip,
+                    selectedCategory === 'all' && styles.filterChipSelected,
+                  ]}
+                  onPress={() => {
+                    impactFeedback();
+                    setSelectedCategory('all');
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Mostrar todas as categorias"
+                  accessibilityState={{ selected: selectedCategory === 'all' }}
+                >
+                  <Typography
+                    variant="caption"
+                    weight={selectedCategory === 'all' ? 'semibold' : 'regular'}
+                    color={selectedCategory === 'all' ? theme.colors.primary : theme.colors.secondaryText}
+                  >
+                    Todas categorias
+                  </Typography>
+                </TouchableOpacity>
+
+                {categoryFilters.map((category) => {
+                  const isSelected = selectedCategory === category;
+
+                  return (
+                    <TouchableOpacity
+                      key={category}
+                      style={[
+                        styles.filterChip,
+                        isSelected && styles.filterChipSelected,
+                      ]}
+                      onPress={() => {
+                        impactFeedback();
+                        setSelectedCategory(category);
+                      }}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Filtrar categoria ${getCategoryMeta(category).label}`}
+                      accessibilityState={{ selected: isSelected }}
+                    >
+                      <Typography
+                        variant="caption"
+                        weight={isSelected ? 'semibold' : 'regular'}
+                        color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
+                      >
+                        {getCategoryMeta(category).label}
+                      </Typography>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+          <Spacer size="md" />
         </View>
       </View>
     </>
@@ -528,10 +564,65 @@ const styles = StyleSheet.create({
   },
   transactionsBand: {
     marginTop: theme.spacing.xl,
-    paddingTop: theme.spacing.xl,
+    paddingTop: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.borderLight,
+  },
+  filterToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  searchBox: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingLeft: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1.5,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  searchInput: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+  },
+  filterToggle: {
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.surfaceSecondary,
+  },
+  filterToggleActive: {
+    borderColor: theme.colors.primary,
+    backgroundColor: theme.colors.primaryBackground,
+  },
+  filterCountBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: theme.colors.primary,
+  },
+  advancedFilters: {
+    marginTop: theme.spacing.md,
+    gap: theme.spacing.sm,
   },
   filterGroup: {
     flexDirection: 'row',
@@ -543,10 +634,10 @@ const styles = StyleSheet.create({
     paddingRight: theme.spacing.lg,
   },
   filterChip: {
-    minHeight: 40,
+    minHeight: 34,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border,
