@@ -64,6 +64,10 @@ function getTopExpenses(transactions: Transaction[]) {
     .slice(0, 5);
 }
 
+function formatPercentage(value: number) {
+  return `${value.toFixed(0)}%`;
+}
+
 function MetricCard({
   label,
   value,
@@ -118,13 +122,19 @@ export default function ExploreScreen() {
   );
 
   const chartData = useMemo(() => {
+    const totalExpenses = Object.values(expensesByCategory).reduce((total, amount) => {
+      return total + amount;
+    }, 0);
+
     return Object.keys(expensesByCategory)
       .map((categoryName) => {
         const categoryMeta = getCategoryMeta(categoryName);
+        const amount = expensesByCategory[categoryName];
 
         return {
           name: categoryMeta.label,
-          population: expensesByCategory[categoryName],
+          population: amount,
+          percentage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0,
           color: categoryMeta.color,
           legendFontColor: theme.colors.primaryText,
           legendFontSize: 14,
@@ -278,29 +288,32 @@ export default function ExploreScreen() {
                   accessor="population"
                   backgroundColor="transparent"
                   paddingLeft={isNarrowScreen ? '4' : '15'}
-                  hasLegend={!isNarrowScreen}
+                  hasLegend={false}
                   absolute
                 />
-                {isNarrowScreen && (
-                  <View style={styles.legendList}>
-                    {chartData.map((item) => (
-                      <View key={item.name} style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                        <Typography
-                          variant="caption"
-                          color={theme.colors.secondaryText}
-                          numberOfLines={1}
-                          style={styles.legendName}
-                        >
-                          {item.name}
+                <View style={styles.legendList}>
+                  {chartData.map((item) => (
+                    <View key={item.name} style={styles.legendItem}>
+                      <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                      <Typography
+                        variant="caption"
+                        color={theme.colors.secondaryText}
+                        numberOfLines={1}
+                        style={styles.legendName}
+                      >
+                        {item.name}
+                      </Typography>
+                      <View style={styles.legendValue}>
+                        <Typography variant="caption" weight="bold" color={theme.colors.primaryText}>
+                          {formatPercentage(item.percentage)}
                         </Typography>
-                        <Typography variant="caption" weight="semibold" color={theme.colors.primaryText}>
+                        <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
                           {formatCurrency(item.population)}
                         </Typography>
                       </View>
-                    ))}
-                  </View>
-                )}
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
 
@@ -480,6 +493,11 @@ const styles = StyleSheet.create({
   legendName: {
     flex: 1,
     minWidth: 0,
+  },
+  legendValue: {
+    minWidth: 92,
+    alignItems: 'flex-end',
+    gap: 2,
   },
   expenseRow: {
     minHeight: 60,

@@ -131,7 +131,20 @@ function getGroupColor(groupId: BudgetGroupId, index: number) {
 function ProgressBar({ allocation, spent, income, color }: ProgressBarProps) {
   const limit = income * (allocation.percentage / 100);
   const percentage = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
-  const isOverBudget = limit > 0 && spent > limit;
+  const isOverTarget = limit > 0 && spent > limit;
+  const isFinancialPriority = allocation.groupId === 'savings';
+  const hasReachedPriorityTarget = isFinancialPriority && limit > 0 && spent >= limit;
+  const hasStatus = isOverTarget || hasReachedPriorityTarget;
+  const shouldWarn = isOverTarget && !isFinancialPriority;
+  const statusLabel = shouldWarn
+    ? 'Acima do limite · '
+    : hasReachedPriorityTarget
+      ? isOverTarget
+        ? 'Meta superada · '
+        : 'Meta atingida · '
+      : '';
+  const statusColor = shouldWarn ? theme.colors.expense : theme.colors.secondaryText;
+  const progressColor = shouldWarn ? theme.colors.expense : color;
 
   return (
     <View style={styles.progressContainer}>
@@ -140,15 +153,19 @@ function ProgressBar({ allocation, spent, income, color }: ProgressBarProps) {
           {allocation.label} ({allocation.percentage}%)
         </Typography>
         <View style={styles.progressValue}>
-          {isOverBudget && (
-            <MaterialIcons name="warning" size={15} color={theme.colors.expense} />
+          {hasStatus && (
+            <MaterialIcons
+              name={isFinancialPriority ? 'check-circle' : 'warning'}
+              size={15}
+              color={isFinancialPriority ? theme.colors.income : theme.colors.expense}
+            />
           )}
           <Typography
             variant="caption"
-            weight={isOverBudget ? 'semibold' : 'regular'}
-            color={isOverBudget ? theme.colors.expense : theme.colors.secondaryText}
+            weight={hasStatus ? 'semibold' : 'regular'}
+            color={hasReachedPriorityTarget ? theme.colors.income : statusColor}
           >
-            {isOverBudget ? 'Acima do limite · ' : ''}{formatCurrency(spent)} / {formatCurrency(limit)}
+            {statusLabel}{formatCurrency(spent)} / {formatCurrency(limit)}
           </Typography>
         </View>
       </View>
@@ -158,7 +175,7 @@ function ProgressBar({ allocation, spent, income, color }: ProgressBarProps) {
           style={[
             styles.fill,
             {
-              backgroundColor: isOverBudget ? theme.colors.expense : color,
+              backgroundColor: progressColor,
               width: `${percentage}%`,
             },
           ]}

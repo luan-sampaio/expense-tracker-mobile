@@ -2,7 +2,7 @@ import { getCategoryMeta } from '@/src/constants/categories';
 import { PendingMutation, Transaction, TransactionType } from '@/src/types';
 
 export type TransactionPeriod = 'week' | 'month' | 'year' | 'all';
-export type TransactionTypeFilter = 'all' | TransactionType;
+export type TransactionTypeFilter = 'all' | TransactionType | 'contribution';
 
 export interface TransactionFilters {
   period: TransactionPeriod;
@@ -145,7 +145,13 @@ export function filterTransactions(
   return sortTransactionsByDate(
     transactions
       .filter((transaction) => isTransactionWithinPeriod(transaction.date, filters.period))
-      .filter((transaction) => filters.type === 'all' || transaction.type === filters.type)
+      .filter((transaction) => {
+        if (filters.type === 'all') return true;
+        if (filters.type === 'contribution') return isGoalContribution(transaction);
+        if (filters.type === 'expense') return isSpendingExpense(transaction);
+
+        return transaction.type === filters.type;
+      })
       .filter((transaction) => filters.category === 'all' || transaction.category === filters.category)
       .filter((transaction) => {
         if (!normalizedSearch) return true;

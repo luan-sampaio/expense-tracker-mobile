@@ -64,9 +64,14 @@ export interface BudgetSettings {
   allocations: BudgetAllocation[];
 }
 
+export interface FinancialGoalsSettings {
+  isVisible: boolean;
+}
+
 export interface ExpenseState {
   transactions: Transaction[];
   financialGoals: FinancialGoal[];
+  financialGoalsSettings: FinancialGoalsSettings;
   pendingMutations: PendingMutation[];
   isLoading: boolean;
   error: string | null;
@@ -75,6 +80,7 @@ export interface ExpenseState {
   budgetSettings: BudgetSettings;
   setBudgetSettings: (settings: BudgetSettings) => void;
   setBudgetVisibility: (isVisible: boolean) => void;
+  setFinancialGoalsVisibility: (isVisible: boolean) => void;
   addFinancialGoal: (goal: Omit<FinancialGoal, 'id' | 'createdAt'>) => void;
   updateFinancialGoal: (id: string, goal: Partial<Omit<FinancialGoal, 'id' | 'createdAt'>>) => void;
   removeFinancialGoal: (id: string) => void;

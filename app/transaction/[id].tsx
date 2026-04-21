@@ -125,8 +125,25 @@ export default function TransactionDetailsScreen() {
   }
 
   const isIncome = transaction.type === 'income';
+  const isContribution = transaction.type === 'expense'
+    && (transaction.financialNature === 'investment' || transaction.financialNature === 'saving');
   const categoryMeta = getCategoryMeta(transaction.category);
   const syncStatus = getSyncLabel(transaction, pendingMutations);
+  const transactionKindLabel = isIncome
+    ? 'Receita'
+    : isContribution
+      ? 'Aporte'
+      : 'Despesa';
+  const transactionKindColor = isIncome
+    ? theme.colors.income
+    : isContribution
+      ? theme.colors.info
+      : theme.colors.expense;
+  const transactionKindBackground = isIncome
+    ? theme.colors.incomeBackground
+    : isContribution
+      ? theme.colors.infoBackground
+      : theme.colors.expenseBackground;
 
   const handleEdit = () => {
     router.push({
@@ -165,14 +182,14 @@ export default function TransactionDetailsScreen() {
           <View style={styles.headerTop}>
             <CategoryIcon category={categoryMeta} size="lg" />
             <View style={[styles.typeBadge, {
-              backgroundColor: isIncome ? theme.colors.incomeBackground : theme.colors.expenseBackground,
+              backgroundColor: transactionKindBackground,
             }]}>
               <Typography
                 variant="caption"
                 weight="semibold"
-                color={isIncome ? theme.colors.income : theme.colors.expense}
+                color={transactionKindColor}
               >
-                {isIncome ? 'Receita' : 'Despesa'}
+                {transactionKindLabel}
               </Typography>
             </View>
           </View>
@@ -180,7 +197,7 @@ export default function TransactionDetailsScreen() {
           <Typography
             variant="hero"
             weight="bold"
-            color={isIncome ? theme.colors.income : theme.colors.expense}
+            color={transactionKindColor}
             align="center"
             numberOfLines={1}
             style={styles.amount}
@@ -216,14 +233,8 @@ export default function TransactionDetailsScreen() {
         <View style={styles.section}>
           <DetailRow
             label="Tipo"
-            value={isIncome
-              ? 'Receita'
-              : transaction.financialNature === 'investment'
-                ? 'Aporte financeiro'
-                : transaction.financialNature === 'saving'
-                  ? 'Aporte financeiro'
-                  : 'Despesa'}
-            valueColor={isIncome ? theme.colors.income : theme.colors.expense}
+            value={isContribution ? 'Aporte financeiro' : transactionKindLabel}
+            valueColor={transactionKindColor}
           />
           <DetailRow label="Categoria" value={categoryMeta.label} valueColor={categoryMeta.color} />
           {transaction.goalId && (

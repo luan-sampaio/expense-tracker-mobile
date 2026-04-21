@@ -89,6 +89,15 @@ export const CATEGORY_OPTIONS: CategoryMeta[] = [
     budgetGroup: 'needs',
   },
   {
+    id: 'investments',
+    label: 'Investimentos',
+    iconName: 'savings',
+    color: theme.colors.info,
+    backgroundColor: theme.colors.infoBackground,
+    type: 'expense',
+    budgetGroup: 'savings',
+  },
+  {
     id: 'salary',
     label: 'Salário',
     iconName: 'payments',

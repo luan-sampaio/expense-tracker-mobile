@@ -14,7 +14,7 @@ import {
   removeAppliedMutations,
 } from '@/src/services/syncQueue';
 import { transactionsApi } from '@/src/services/transactionsApi';
-import { BudgetSettings, ExpenseState } from '@/src/types';
+import { BudgetSettings, ExpenseState, FinancialGoalsSettings } from '@/src/types';
 import { successFeedback } from '@/src/utils/haptics';
 
 let isFlushingQueue = false;
@@ -41,6 +41,10 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
   ],
 };
 
+export const DEFAULT_FINANCIAL_GOALS_SETTINGS: FinancialGoalsSettings = {
+  isVisible: true,
+};
+
 function normalizeBudgetSettings(settings?: BudgetSettings): BudgetSettings {
   const source = settings ?? DEFAULT_BUDGET_SETTINGS;
 
@@ -53,6 +57,13 @@ function normalizeBudgetSettings(settings?: BudgetSettings): BudgetSettings {
         ? 'Prioridade financeira'
         : allocation.label,
     })),
+  };
+}
+
+function normalizeFinancialGoalsSettings(settings?: FinancialGoalsSettings): FinancialGoalsSettings {
+  return {
+    ...DEFAULT_FINANCIAL_GOALS_SETTINGS,
+    ...settings,
   };
 }
 
@@ -69,6 +80,7 @@ export const useExpenseStore = create<ExpenseState>()(
     (set, get) => ({
       transactions: [],
       financialGoals: [],
+      financialGoalsSettings: DEFAULT_FINANCIAL_GOALS_SETTINGS,
       pendingMutations: [],
       isLoading: false,
       error: null,
@@ -84,6 +96,15 @@ export const useExpenseStore = create<ExpenseState>()(
         set((state) => ({
           budgetSettings: {
             ...state.budgetSettings,
+            isVisible,
+          },
+        }));
+      },
+
+      setFinancialGoalsVisibility: (isVisible) => {
+        set((state) => ({
+          financialGoalsSettings: {
+            ...state.financialGoalsSettings,
             isVisible,
           },
         }));
@@ -282,6 +303,7 @@ export const useExpenseStore = create<ExpenseState>()(
           ...state,
           transactions: state.transactions?.map(normalizeTransaction) ?? [],
           financialGoals: state.financialGoals ?? [],
+          financialGoalsSettings: normalizeFinancialGoalsSettings(state.financialGoalsSettings),
           pendingMutations: state.pendingMutations ?? [],
           isLoading: false,
           error: null,

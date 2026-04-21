@@ -21,6 +21,9 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacit
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
+type TransactionFormKind = TransactionType | 'contribution';
+const INVESTMENT_CATEGORY_ID = 'investments';
+
 function formatDateLabel(date: Date) {
   return date.toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -114,6 +117,11 @@ export default function ModalScreen() {
     variant: 'success',
   });
   const [errors, setErrors] = useState<TransactionFormErrors>({ amount: '', description: '' });
+  const selectedKind: TransactionFormKind = type === 'income'
+    ? 'income'
+    : financialNature === 'spending'
+      ? 'expense'
+      : 'contribution';
 
   const showSaveFeedback = () => {
     successFeedback();
@@ -137,8 +145,9 @@ export default function ModalScreen() {
     }
   };
 
-  const handleTypeChange = (nextType: TransactionType) => {
+  const handleTypeChange = (nextKind: TransactionFormKind) => {
     impactFeedback();
+    const nextType: TransactionType = nextKind === 'income' ? 'income' : 'expense';
     const categories = getCategoriesByType(nextType);
     const categoryStillAvailable = categories.some((item) => item.id === category);
 
@@ -154,26 +163,34 @@ export default function ModalScreen() {
       setBudgetGroupId(undefined);
       setFinancialNature('spending');
       setGoalId(undefined);
+      return;
     }
-  };
 
-  const handleFinancialNatureChange = (nextNature: FinancialNature) => {
-    impactFeedback();
-    setFinancialNature(nextNature);
-
-    if (nextNature === 'spending') {
-      setGoalId(undefined);
-      if (!budgetGroupId) setBudgetGroupId(getDefaultBudgetGroupId(category));
-    } else {
+    if (nextKind === 'contribution') {
+      setCategory(INVESTMENT_CATEGORY_ID);
       setBudgetGroupId(undefined);
+      setFinancialNature('investment');
       setGoalId((current) => current ?? financialGoals[0]?.id);
+      return;
     }
+
+    setFinancialNature('spending');
+    setGoalId(undefined);
+
+    if (category === INVESTMENT_CATEGORY_ID) {
+      const nextCategory = categories.find((item) => item.budgetGroup !== 'savings')?.id ?? 'other';
+      setCategory(nextCategory);
+      setBudgetGroupId(getDefaultBudgetGroupId(nextCategory));
+      return;
+    }
+
+    setBudgetGroupId((current) => current ?? getDefaultBudgetGroupId(category));
   };
 
   const handleCategorySelect = (nextCategory: string) => {
     setCategory(nextCategory);
 
-    if (!budgetGroupId) {
+    if (type === 'expense' && financialNature === 'spending' && !budgetGroupId) {
       setBudgetGroupId(getDefaultBudgetGroupId(nextCategory));
     }
   };
@@ -270,15 +287,15 @@ export default function ModalScreen() {
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                type === 'expense' && styles.expenseOptionSelected,
+                selectedKind === 'expense' && styles.expenseOptionSelected,
               ]}
               onPress={() => handleTypeChange('expense')}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Selecionar tipo despesa"
-              accessibilityState={{ selected: type === 'expense' }}
+              accessibilityState={{ selected: selectedKind === 'expense' }}
             >
-              {type === 'expense' && (
+              {selectedKind === 'expense' && (
                 <View style={[styles.typeSelectedMark, { backgroundColor: theme.colors.expense }]}>
                   <MaterialIcons name="check" size={14} color={theme.colors.surface} />
                 </View>
@@ -286,12 +303,12 @@ export default function ModalScreen() {
               <MaterialIcons
                 name="arrow-downward"
                 size={20}
-                color={type === 'expense' ? theme.colors.expense : theme.colors.secondaryText}
+                color={selectedKind === 'expense' ? theme.colors.expense : theme.colors.secondaryText}
               />
               <Typography
                 variant="body"
                 weight="semibold"
-                color={type === 'expense' ? theme.colors.expense : theme.colors.primaryText}
+                color={selectedKind === 'expense' ? theme.colors.expense : theme.colors.primaryText}
               >
                 Despesa
               </Typography>
@@ -300,15 +317,45 @@ export default function ModalScreen() {
             <TouchableOpacity
               style={[
                 styles.typeOption,
-                type === 'income' && styles.incomeOptionSelected,
+                selectedKind === 'contribution' && styles.contributionOptionSelected,
+              ]}
+              onPress={() => handleTypeChange('contribution')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Selecionar tipo aporte"
+              accessibilityState={{ selected: selectedKind === 'contribution' }}
+            >
+              {selectedKind === 'contribution' && (
+                <View style={[styles.typeSelectedMark, { backgroundColor: theme.colors.info }]}>
+                  <MaterialIcons name="check" size={14} color={theme.colors.surface} />
+                </View>
+              )}
+              <MaterialIcons
+                name="savings"
+                size={20}
+                color={selectedKind === 'contribution' ? theme.colors.info : theme.colors.secondaryText}
+              />
+              <Typography
+                variant="body"
+                weight="semibold"
+                color={selectedKind === 'contribution' ? theme.colors.info : theme.colors.primaryText}
+              >
+                Aporte
+              </Typography>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.typeOption,
+                selectedKind === 'income' && styles.incomeOptionSelected,
               ]}
               onPress={() => handleTypeChange('income')}
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Selecionar tipo receita"
-              accessibilityState={{ selected: type === 'income' }}
+              accessibilityState={{ selected: selectedKind === 'income' }}
             >
-              {type === 'income' && (
+              {selectedKind === 'income' && (
                 <View style={[styles.typeSelectedMark, { backgroundColor: theme.colors.income }]}>
                   <MaterialIcons name="check" size={14} color={theme.colors.surface} />
                 </View>
@@ -316,12 +363,12 @@ export default function ModalScreen() {
               <MaterialIcons
                 name="arrow-upward"
                 size={20}
-                color={type === 'income' ? theme.colors.income : theme.colors.secondaryText}
+                color={selectedKind === 'income' ? theme.colors.income : theme.colors.secondaryText}
               />
               <Typography
                 variant="body"
                 weight="semibold"
-                color={type === 'income' ? theme.colors.income : theme.colors.primaryText}
+                color={selectedKind === 'income' ? theme.colors.income : theme.colors.primaryText}
               >
                 Receita
               </Typography>
@@ -347,28 +394,6 @@ export default function ModalScreen() {
             type={type}
           />
           <Spacer size="lg" />
-
-          {type === 'expense' && (
-            <>
-              <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
-                Natureza
-              </Typography>
-              <Spacer size="xs" />
-              <View style={styles.budgetGroupSelector}>
-                <Chip
-                  label="Gasto comum"
-                  selected={financialNature === 'spending'}
-                  onPress={() => handleFinancialNatureChange('spending')}
-                />
-                <Chip
-                  label="Aporte financeiro"
-                  selected={financialNature === 'saving' || financialNature === 'investment'}
-                  onPress={() => handleFinancialNatureChange('investment')}
-                />
-              </View>
-              <Spacer size="lg" />
-            </>
-          )}
 
           {type === 'expense' && financialNature === 'spending' && (
             <>
@@ -547,6 +572,11 @@ const styles = StyleSheet.create({
     borderWidth: 2.5,
     borderColor: theme.colors.income,
     backgroundColor: theme.colors.incomeBackground,
+  },
+  contributionOptionSelected: {
+    borderWidth: 2.5,
+    borderColor: theme.colors.info,
+    backgroundColor: theme.colors.infoBackground,
   },
   typeSelectedMark: {
     position: 'absolute',

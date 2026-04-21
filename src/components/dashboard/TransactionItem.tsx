@@ -37,6 +37,8 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
   const swipeableRef = useRef<Swipeable>(null);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const isIncome = transaction.type === 'income';
+  const isContribution = transaction.type === 'expense'
+    && (transaction.financialNature === 'investment' || transaction.financialNature === 'saving');
   const { pendingMutations, removeTransaction } = useExpenseStore(
     useShallow((state) => ({
       pendingMutations: state.pendingMutations,
@@ -47,6 +49,17 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
   const pendingLabel = getPendingLabel(transaction, pendingMutations);
 
   const formattedAmount = formatCurrency(transaction.amount);
+  const amountPrefix = isIncome ? '+' : '-';
+  const amountColor = isIncome
+    ? theme.colors.income
+    : isContribution
+      ? theme.colors.info
+      : theme.colors.expense;
+  const transactionKindLabel = isIncome
+    ? 'Receita'
+    : isContribution
+      ? 'Aporte'
+      : 'Despesa';
 
   const dateStr = formatFriendlyDate(transaction.date);
 
@@ -178,21 +191,15 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
             <Typography
               variant="body"
               weight="bold"
-              color={isIncome ? theme.colors.income : theme.colors.expense}
+              color={amountColor}
               align="right"
               style={styles.amount}
               numberOfLines={1}
             >
-              {isIncome ? '+' : '-'}{formattedAmount}
+              {amountPrefix}{formattedAmount}
             </Typography>
             <Typography variant="caption" color={theme.colors.secondaryText} align="right">
-              {isIncome
-                ? 'Receita'
-                : transaction.financialNature === 'investment'
-                  ? 'Aporte'
-                  : transaction.financialNature === 'saving'
-                    ? 'Aporte'
-                    : 'Despesa'}
+              {transactionKindLabel}
             </Typography>
           </View>
         </TouchableOpacity>

@@ -25,14 +25,18 @@ export function FinancialGoalsWidget() {
   const {
     addFinancialGoal,
     financialGoals,
+    financialGoalsSettings,
     removeFinancialGoal,
+    setFinancialGoalsVisibility,
     transactions,
     updateFinancialGoal,
   } = useExpenseStore(
     useShallow((state) => ({
       addFinancialGoal: state.addFinancialGoal,
       financialGoals: state.financialGoals,
+      financialGoalsSettings: state.financialGoalsSettings,
       removeFinancialGoal: state.removeFinancialGoal,
+      setFinancialGoalsVisibility: state.setFinancialGoalsVisibility,
       transactions: state.transactions,
       updateFinancialGoal: state.updateFinancialGoal,
     }))
@@ -85,6 +89,17 @@ export function FinancialGoalsWidget() {
     setIsModalVisible(false);
   };
 
+  if (!financialGoalsSettings.isVisible) {
+    return (
+      <Button
+        label="Mostrar metas"
+        variant="secondary"
+        iconName="visibility"
+        onPress={() => setFinancialGoalsVisibility(true)}
+      />
+    );
+  }
+
   return (
     <>
       <View style={styles.container}>
@@ -97,7 +112,17 @@ export function FinancialGoalsWidget() {
               Acompanhe reservas, investimentos e objetivos.
             </Typography>
           </View>
-          <Button label="Nova" size="sm" iconName="add" onPress={openCreate} />
+          <View style={styles.headerActions}>
+            <Button
+              label="Ocultar"
+              variant="ghost"
+              size="sm"
+              iconName="visibility-off"
+              onPress={() => setFinancialGoalsVisibility(false)}
+              accessibilityLabel="Ocultar metas financeiras"
+            />
+            <Button label="Nova" size="sm" iconName="add" onPress={openCreate} />
+          </View>
         </View>
 
         {goalsWithProgress.length === 0 ? (
@@ -210,6 +235,12 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
     minWidth: 0,
+    gap: theme.spacing.xs,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
     gap: theme.spacing.xs,
   },
   emptyState: {

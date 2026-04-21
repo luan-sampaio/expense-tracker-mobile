@@ -65,11 +65,18 @@ function getTopExpenseCategory(transactions: Transaction[]) {
 }
 
 function getExpenseComparison(currentExpenses: number, previousExpenses: number) {
+  if (currentExpenses === 0) {
+    return {
+      label: previousExpenses > 0
+        ? 'Sem despesas neste mês'
+        : 'Sem despesas nos dois meses',
+      direction: 'neutral' as const,
+    };
+  }
+
   if (previousExpenses === 0) {
     return {
-      label: currentExpenses > 0
-        ? 'Sem despesas no mês anterior'
-        : 'Sem despesas nos dois meses',
+      label: 'Sem despesas no mês anterior',
       direction: 'neutral' as const,
     };
   }

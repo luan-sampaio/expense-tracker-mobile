@@ -18,10 +18,12 @@ import { getCategoryMeta } from '@/src/constants/categories';
 import {
   filterTransactions,
   getTransactionCategoryIds,
+  TransactionTypeFilter,
 } from '@/src/domain/transactions';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
-import { Transaction, TransactionType } from '@/src/types';
+import { Transaction } from '@/src/types';
+import { formatMonthLabel } from '@/src/utils/formatters';
 import { impactFeedback, successFeedback } from '@/src/utils/haptics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
@@ -29,14 +31,48 @@ import React, { useMemo, useState } from 'react';
 import { FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-type TypeFilter = 'all' | TransactionType;
+type TypeFilter = TransactionTypeFilter;
 type CategoryFilter = 'all' | string;
+type DateScopeFilter = 'all' | `year:${number}` | `month:${string}`;
 
 const TYPE_FILTERS: { id: TypeFilter; label: string }[] = [
   { id: 'all', label: 'Todas' },
   { id: 'income', label: 'Receitas' },
+  { id: 'contribution', label: 'Aportes' },
   { id: 'expense', label: 'Despesas' },
 ];
+
+function getMonthKey(value: string | Date) {
+  const date = new Date(value);
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${date.getFullYear()}-${month}`;
+}
+
+function getDateScopeLabel(scope: DateScopeFilter) {
+  if (scope === 'all') return 'Todos meses';
+
+  if (scope.startsWith('year:')) {
+    return scope.replace('year:', '');
+  }
+
+  const [, monthKey] = scope.split(':');
+  const [year, month] = monthKey.split('-').map(Number);
+
+  return formatMonthLabel(new Date(year, month - 1, 1));
+}
+
+function isTransactionInDateScope(transaction: Transaction, scope: DateScopeFilter) {
+  if (scope === 'all') return true;
+
+  const transactionDate = new Date(transaction.date);
+
+  if (scope.startsWith('year:')) {
+    return transactionDate.getFullYear() === Number(scope.replace('year:', ''));
+  }
+
+  return getMonthKey(transaction.date) === scope.replace('month:', '');
+}
 
 function TransactionSkeletonList() {
   return (
@@ -58,6 +94,7 @@ function TransactionSkeletonList() {
 
 export default function HomeScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
+  const [selectedDateScope, setSelectedDateScope] = useState<DateScopeFilter>('all');
   const [selectedType, setSelectedType] = useState<TypeFilter>('all');
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,17 +122,41 @@ export default function HomeScreen() {
     return getTransactionCategoryIds(transactions);
   }, [transactions]);
 
+  const dateScopeFilters = useMemo(() => {
+    const yearScopes = Array.from(new Set(
+      transactions.map((transaction) => new Date(transaction.date).getFullYear())
+    ))
+      .sort((a, b) => b - a)
+      .map((year) => `year:${year}` as const);
+
+    const monthScopes = Array.from(new Set(
+      transactions.map((transaction) => getMonthKey(transaction.date))
+    ))
+      .sort((a, b) => b.localeCompare(a))
+      .map((monthKey) => `month:${monthKey}` as const);
+
+    return {
+      years: yearScopes,
+      months: monthScopes,
+    };
+  }, [transactions]);
+
   const filteredTransactions = useMemo(() => {
-    return filterTransactions(transactions, {
+    const dateScopedTransactions = transactions.filter((transaction) => {
+      return isTransactionInDateScope(transaction, selectedDateScope);
+    });
+
+    return filterTransactions(dateScopedTransactions, {
       period: selectedPeriod,
       type: selectedType,
       category: selectedCategory,
       search: searchQuery,
     });
-  }, [transactions, searchQuery, selectedCategory, selectedPeriod, selectedType]);
+  }, [transactions, searchQuery, selectedCategory, selectedDateScope, selectedPeriod, selectedType]);
 
   const activeFilterCount = [
     selectedPeriod !== 'all',
+    selectedDateScope !== 'all',
     selectedType !== 'all',
     selectedCategory !== 'all',
     searchQuery.trim().length > 0,
@@ -105,10 +166,22 @@ export default function HomeScreen() {
   const clearFilters = () => {
     impactFeedback();
     setSelectedPeriod('all');
+    setSelectedDateScope('all');
     setSelectedType('all');
     setSelectedCategory('all');
     setSearchQuery('');
     setIsFiltersExpanded(false);
+  };
+
+  const handlePeriodSelect = (period: Period) => {
+    setSelectedPeriod(period);
+    setSelectedDateScope('all');
+  };
+
+  const handleDateScopeSelect = (scope: DateScopeFilter) => {
+    impactFeedback();
+    setSelectedDateScope(scope);
+    setSelectedPeriod('all');
   };
 
   const renderTransaction: ListRenderItem<Transaction> = ({ item }) => (
@@ -255,8 +328,56 @@ export default function HomeScreen() {
             <View style={styles.advancedFilters}>
               <PeriodFilter
                 selectedPeriod={selectedPeriod}
-                onSelectPeriod={setSelectedPeriod}
+                onSelectPeriod={handlePeriodSelect}
               />
+
+              {(dateScopeFilters.years.length > 0 || dateScopeFilters.months.length > 0) && (
+                <View style={styles.filterGroupStack}>
+                  <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
+                    Arquivo
+                  </Typography>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.dateScopeFilterContent}
+                  >
+                    <Chip
+                      label="Todos meses"
+                      selected={selectedDateScope === 'all'}
+                      onPress={() => handleDateScopeSelect('all')}
+                      accessibilityLabel="Mostrar transações de todos os meses"
+                    />
+
+                    {dateScopeFilters.years.map((scope) => {
+                      const isSelected = selectedDateScope === scope;
+
+                      return (
+                        <Chip
+                          key={scope}
+                          label={getDateScopeLabel(scope)}
+                          selected={isSelected}
+                          onPress={() => handleDateScopeSelect(scope)}
+                          accessibilityLabel={`Filtrar transações de ${getDateScopeLabel(scope)}`}
+                        />
+                      );
+                    })}
+
+                    {dateScopeFilters.months.map((scope) => {
+                      const isSelected = selectedDateScope === scope;
+
+                      return (
+                        <Chip
+                          key={scope}
+                          label={getDateScopeLabel(scope)}
+                          selected={isSelected}
+                          onPress={() => handleDateScopeSelect(scope)}
+                          accessibilityLabel={`Filtrar transações de ${getDateScopeLabel(scope)}`}
+                        />
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              )}
 
               <View style={styles.filterGroup}>
                 {TYPE_FILTERS.map((filter) => {
@@ -326,7 +447,7 @@ export default function HomeScreen() {
         message={
           hasActiveFilters
             ? 'Tente ajustar a busca, período, tipo ou categoria para encontrar uma transação.'
-            : 'Adicione uma receita ou despesa para acompanhar seu saldo e seus gastos.'
+            : 'Adicione uma receita, despesa ou aporte para acompanhar seu saldo e seus gastos.'
         }
         actionLabel={hasActiveFilters ? 'Limpar filtros' : 'Adicionar primeira transação'}
         actionVariant={hasActiveFilters ? 'secondary' : 'primary'}
@@ -439,6 +560,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
+  },
+  filterGroupStack: {
+    gap: theme.spacing.xs,
+  },
+  dateScopeFilterContent: {
+    gap: theme.spacing.sm,
+    paddingRight: theme.spacing.lg,
   },
   categoryFilterContent: {
     gap: theme.spacing.sm,
