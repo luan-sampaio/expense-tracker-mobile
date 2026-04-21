@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Chip } from '@/src/components/ui/Chip';
 import { EmptyState } from '@/src/components/ui/EmptyState';
 import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Spacer } from '@/src/components/ui/Spacer';
@@ -14,7 +16,7 @@ import { Transaction } from '@/src/types';
 import { formatCurrency, formatMonthLabel } from '@/src/utils/formatters';
 import { getDashboardMetrics } from '@/src/utils/transactionMetrics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -23,6 +25,18 @@ import {
   View,
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+
+const SUMMARY_VISIBILITY_STORAGE_KEY = 'summary-section-visibility';
+
+type SummarySectionVisibility = {
+  categorySpending: boolean;
+  topExpenses: boolean;
+};
+
+const DEFAULT_SUMMARY_VISIBILITY: SummarySectionVisibility = {
+  categorySpending: true,
+  topExpenses: true,
+};
 
 function getMonthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -101,6 +115,7 @@ function MetricCard({
 export default function ExploreScreen() {
   const transactions = useExpenseStore((state) => state.transactions);
   const [selectedMonth, setSelectedMonth] = useState(() => getMonthStart(new Date()));
+  const [sectionVisibility, setSectionVisibility] = useState<SummarySectionVisibility>(DEFAULT_SUMMARY_VISIBILITY);
   const { width } = useWindowDimensions();
   const isNarrowScreen = width <= 380;
   const chartWidth = Math.max(width - theme.spacing.lg * 2, 260);
@@ -166,6 +181,39 @@ export default function ExploreScreen() {
     backgroundGradientFrom: theme.colors.background,
     backgroundGradientTo: theme.colors.background,
     color: (opacity = 1) => `rgba(45, 42, 38, ${opacity})`,
+  };
+
+  useEffect(() => {
+    AsyncStorage.getItem(SUMMARY_VISIBILITY_STORAGE_KEY)
+      .then((storedValue) => {
+        if (!storedValue) return;
+
+        const parsed = JSON.parse(storedValue) as Partial<SummarySectionVisibility>;
+        setSectionVisibility({
+          ...DEFAULT_SUMMARY_VISIBILITY,
+          ...parsed,
+        });
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const updateSectionVisibility = (
+    section: keyof SummarySectionVisibility,
+    isVisible: boolean
+  ) => {
+    setSectionVisibility((current) => {
+      const nextVisibility = {
+        ...current,
+        [section]: isVisible,
+      };
+
+      AsyncStorage.setItem(
+        SUMMARY_VISIBILITY_STORAGE_KEY,
+        JSON.stringify(nextVisibility)
+      ).catch(() => undefined);
+
+      return nextVisibility;
+    });
   };
 
   return (
@@ -257,6 +305,36 @@ export default function ExploreScreen() {
           />
         </View>
 
+        <View style={styles.sectionToggles}>
+          <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
+            Seções
+          </Typography>
+          <View style={styles.sectionToggleList}>
+            <Chip
+              label="Categorias"
+              size="sm"
+              selected={sectionVisibility.categorySpending}
+              onPress={() => updateSectionVisibility('categorySpending', !sectionVisibility.categorySpending)}
+              accessibilityLabel={
+                sectionVisibility.categorySpending
+                  ? 'Ocultar gastos por categoria'
+                  : 'Mostrar gastos por categoria'
+              }
+            />
+            <Chip
+              label="Top despesas"
+              size="sm"
+              selected={sectionVisibility.topExpenses}
+              onPress={() => updateSectionVisibility('topExpenses', !sectionVisibility.topExpenses)}
+              accessibilityLabel={
+                sectionVisibility.topExpenses
+                  ? 'Ocultar top despesas'
+                  : 'Mostrar top despesas'
+              }
+            />
+          </View>
+        </View>
+
         {!hasMonthData ? (
           <EmptyState
             iconName="bar-chart"
@@ -266,101 +344,109 @@ export default function ExploreScreen() {
           />
         ) : (
           <>
-            <SectionHeader
-              title="Gastos por categoria"
-              subtitle="Somente despesas comuns entram nesta distribuição"
-              style={styles.sectionHeader}
-            />
-
-            {chartData.length === 0 ? (
-              <View style={styles.surfaceCard}>
-                <Typography variant="body" color={theme.colors.secondaryText} align="center">
-                  Nenhuma despesa comum registrada neste mês.
-                </Typography>
-              </View>
-            ) : (
-              <View style={styles.chartWrapper}>
-                <PieChart
-                  data={chartData}
-                  width={chartWidth}
-                  height={chartHeight}
-                  chartConfig={chartConfig}
-                  accessor="population"
-                  backgroundColor="transparent"
-                  paddingLeft={isNarrowScreen ? '4' : '15'}
-                  hasLegend={false}
-                  absolute
+            {sectionVisibility.categorySpending && (
+              <>
+                <SectionHeader
+                  title="Gastos por categoria"
+                  subtitle="Somente despesas comuns entram nesta distribuição"
+                  style={styles.sectionHeader}
                 />
-                <View style={styles.legendList}>
-                  {chartData.map((item) => (
-                    <View key={item.name} style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                      <Typography
-                        variant="caption"
-                        color={theme.colors.secondaryText}
-                        numberOfLines={1}
-                        style={styles.legendName}
-                      >
-                        {item.name}
-                      </Typography>
-                      <View style={styles.legendValue}>
-                        <Typography variant="caption" weight="bold" color={theme.colors.primaryText}>
-                          {formatPercentage(item.percentage)}
-                        </Typography>
-                        <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
-                          {formatCurrency(item.population)}
-                        </Typography>
-                      </View>
+
+                {chartData.length === 0 ? (
+                  <View style={styles.surfaceCard}>
+                    <Typography variant="body" color={theme.colors.secondaryText} align="center">
+                      Nenhuma despesa comum registrada neste mês.
+                    </Typography>
+                  </View>
+                ) : (
+                  <View style={styles.chartWrapper}>
+                    <PieChart
+                      data={chartData}
+                      width={chartWidth}
+                      height={chartHeight}
+                      chartConfig={chartConfig}
+                      accessor="population"
+                      backgroundColor="transparent"
+                      paddingLeft={isNarrowScreen ? '4' : '15'}
+                      hasLegend={false}
+                      absolute
+                    />
+                    <View style={styles.legendList}>
+                      {chartData.map((item) => (
+                        <View key={item.name} style={styles.legendItem}>
+                          <View style={[styles.legendDot, { backgroundColor: item.color }]} />
+                          <Typography
+                            variant="caption"
+                            color={theme.colors.secondaryText}
+                            numberOfLines={1}
+                            style={styles.legendName}
+                          >
+                            {item.name}
+                          </Typography>
+                          <View style={styles.legendValue}>
+                            <Typography variant="caption" weight="bold" color={theme.colors.primaryText}>
+                              {formatPercentage(item.percentage)}
+                            </Typography>
+                            <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+                              {formatCurrency(item.population)}
+                            </Typography>
+                          </View>
+                        </View>
+                      ))}
                     </View>
-                  ))}
-                </View>
-              </View>
+                  </View>
+                )}
+              </>
             )}
 
-            <SectionHeader
-              title="Top despesas"
-              subtitle="As maiores despesas comuns do mês"
-              style={styles.sectionHeader}
-            />
+            {sectionVisibility.topExpenses && (
+              <>
+                <SectionHeader
+                  title="Top despesas"
+                  subtitle="As maiores despesas comuns do mês"
+                  style={styles.sectionHeader}
+                />
 
-            <View style={styles.surfaceCard}>
-              {topExpenses.length === 0 ? (
-                <Typography variant="body" color={theme.colors.secondaryText} align="center">
-                  Nenhuma despesa comum para listar.
-                </Typography>
-              ) : (
-                topExpenses.map((transaction, index) => {
-                  const category = getCategoryMeta(transaction.category);
+                <View style={styles.surfaceCard}>
+                  {topExpenses.length === 0 ? (
+                    <Typography variant="body" color={theme.colors.secondaryText} align="center">
+                      Nenhuma despesa comum para listar.
+                    </Typography>
+                  ) : (
+                    topExpenses.map((transaction, index) => {
+                      const category = getCategoryMeta(transaction.category);
 
-                  return (
-                    <View
-                      key={transaction.id}
-                      style={[
-                        styles.expenseRow,
-                        index < topExpenses.length - 1 && styles.expenseRowBorder,
-                      ]}
-                    >
-                      <View style={[styles.rankBadge, { backgroundColor: category.backgroundColor }]}>
-                        <Typography variant="caption" weight="bold" color={category.color}>
-                          {index + 1}
-                        </Typography>
-                      </View>
-                      <View style={styles.expenseInfo}>
-                        <Typography variant="body" weight="semibold" numberOfLines={1}>
-                          {transaction.description || category.label}
-                        </Typography>
-                        <Typography variant="caption" color={theme.colors.secondaryText}>
-                          {category.label}
-                        </Typography>
-                      </View>
-                      <Typography variant="body" weight="bold" color={theme.colors.expense}>
-                        {formatCurrency(transaction.amount)}
-                      </Typography>
-                    </View>
-                  );
-                })
-              )}
-            </View>
+                      return (
+                        <View
+                          key={transaction.id}
+                          style={[
+                            styles.expenseRow,
+                            index < topExpenses.length - 1 && styles.expenseRowBorder,
+                          ]}
+                        >
+                          <View style={[styles.rankBadge, { backgroundColor: category.backgroundColor }]}>
+                            <Typography variant="caption" weight="bold" color={category.color}>
+                              {index + 1}
+                            </Typography>
+                          </View>
+                          <View style={styles.expenseInfo}>
+                            <Typography variant="body" weight="semibold" numberOfLines={1}>
+                              {transaction.description || category.label}
+                            </Typography>
+                            <Typography variant="caption" color={theme.colors.secondaryText}>
+                              {category.label}
+                            </Typography>
+                          </View>
+                          <Typography variant="body" weight="bold" color={theme.colors.expense}>
+                            {formatCurrency(transaction.amount)}
+                          </Typography>
+                        </View>
+                      );
+                    })
+                  )}
+                </View>
+              </>
+            )}
           </>
         )}
 
@@ -429,6 +515,15 @@ const styles = StyleSheet.create({
   },
   metricsGrid: {
     marginTop: theme.spacing.lg,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  sectionToggles: {
+    marginTop: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+  sectionToggleList: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: theme.spacing.sm,
