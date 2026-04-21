@@ -8,7 +8,7 @@ import { PendingMutation, Transaction } from '@/src/types';
 import { formatCurrency, formatFriendlyDate } from '@/src/utils/formatters';
 import { impactFeedback, warningFeedback } from '@/src/utils/haptics';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { Spacer } from '@/src/components/ui/Spacer';
@@ -33,6 +33,7 @@ function getPendingLabel(transaction: Transaction, pendingMutations: PendingMuta
 }
 
 export function TransactionItem({ transaction, onDeleted }: Props) {
+  const swipeableRef = useRef<Swipeable>(null);
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
   const isIncome = transaction.type === 'income';
   const { pendingMutations, removeTransaction } = useExpenseStore(
@@ -49,17 +50,20 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
   const dateStr = formatFriendlyDate(transaction.date);
 
   const handleDelete = () => {
+    swipeableRef.current?.close();
     setIsDeleteDialogVisible(true);
   };
 
   const confirmDelete = () => {
     warningFeedback();
+    swipeableRef.current?.close();
     removeTransaction(transaction.id);
     setIsDeleteDialogVisible(false);
     onDeleted?.();
   };
 
   const handleEdit = () => {
+    swipeableRef.current?.close();
     router.push({
       pathname: '/modal',
       params: { 
@@ -116,6 +120,7 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
   return (
     <>
       <Swipeable
+        ref={swipeableRef}
         renderLeftActions={renderLeftActions}
         renderRightActions={renderRightActions}
         overshootLeft={false}
@@ -144,23 +149,18 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
                 {transaction.description}
               </Typography>
               <Spacer size="xs" />
-              <View style={styles.metaRow}>
-                <View style={styles.metaText}>
-                  <Typography
-                    variant="caption"
-                    color={categoryMeta.color}
-                    weight="semibold"
-                    numberOfLines={1}
-                    style={styles.categoryLabel}
-                  >
-                    {categoryMeta.label}
-                  </Typography>
-                  <View style={styles.metaDot} />
-                  <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
-                    {dateStr}
-                  </Typography>
-                </View>
-              </View>
+              <Typography
+                variant="caption"
+                color={categoryMeta.color}
+                weight="semibold"
+                numberOfLines={1}
+              >
+                {categoryMeta.label}
+              </Typography>
+              <Spacer size="xs" />
+              <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
+                {dateStr}
+              </Typography>
               {pendingLabel && (
                 <>
                   <Spacer size="xs" />
@@ -242,28 +242,6 @@ const styles = StyleSheet.create({
   textContent: {
     flex: 1,
     minWidth: 0,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: theme.spacing.md,
-  },
-  metaText: {
-    flex: 1,
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  categoryLabel: {
-    flexShrink: 1,
-  },
-  metaDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.colors.border,
   },
   pendingBadge: {
     alignSelf: 'flex-start',
