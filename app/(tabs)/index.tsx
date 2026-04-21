@@ -94,6 +94,7 @@ export default function HomeScreen() {
       border: theme.colors.incomeBorder,
     },
   }[syncStatus];
+  const shouldShowCompactSync = syncStatus === 'synced' && pendingCount === 0 && !error;
 
   const categoryFilters = useMemo(() => {
     return getTransactionCategoryIds(transactions);
@@ -132,7 +133,7 @@ export default function HomeScreen() {
 
   const listHeader = (
     <>
-      <Spacer size="xxl" />
+      <Spacer size="xl" />
 
       {error && (
         <View style={styles.section}>
@@ -145,105 +146,123 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <View style={styles.section}>
-        <View
-          style={[
-            styles.syncCard,
-            {
-              backgroundColor: statusConfig.background,
-              borderColor: statusConfig.border,
-            },
-          ]}
-        >
-          <View style={styles.syncHeader}>
-            <Typography variant="body" weight="semibold" color={statusConfig.color}>
-              {statusConfig.label}
+      {shouldShowCompactSync ? (
+        <View style={styles.section}>
+          <View style={styles.compactSync}>
+            <MaterialIcons name="cloud-done" size={18} color={theme.colors.success} />
+            <Typography variant="caption" weight="semibold" color={theme.colors.success}>
+              Tudo salvo
             </Typography>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.section}>
+          <View
+            style={[
+              styles.syncCard,
+              {
+                backgroundColor: statusConfig.background,
+                borderColor: statusConfig.border,
+              },
+            ]}
+          >
+            <View style={styles.syncHeader}>
+              <View style={styles.syncTitle}>
+                <MaterialIcons
+                  name={syncStatus === 'offline' ? 'cloud-off' : 'sync'}
+                  size={20}
+                  color={statusConfig.color}
+                />
+                <Typography variant="body" weight="semibold" color={statusConfig.color}>
+                  {statusConfig.label}
+                </Typography>
+              </View>
+              {pendingCount > 0 && (
+                <Typography variant="caption" color={theme.colors.secondaryText}>
+                  {pendingCount === 1
+                    ? '1 alteração pendente'
+                    : `${pendingCount} alterações pendentes`}
+                </Typography>
+              )}
+            </View>
+
+            <Typography variant="caption" color={theme.colors.secondaryText}>
+              {formatLastSyncAt(lastSyncAt)}
+            </Typography>
+
             {pendingCount > 0 && (
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                {pendingCount === 1
-                  ? '1 alteração pendente'
-                  : `${pendingCount} alterações pendentes`}
-              </Typography>
+              <>
+                <Typography variant="caption" color={theme.colors.secondaryText}>
+                  {pendingCount === 1
+                    ? 'A alteração será reenviada automaticamente quando o servidor responder.'
+                    : `${pendingCount} alterações aguardando sincronização`}
+                </Typography>
+
+                <View style={styles.syncActions}>
+                  <Button
+                    label="Tentar agora"
+                    variant="secondary"
+                    onPress={() => {
+                      impactFeedback();
+                      syncAll();
+                    }}
+                    style={styles.retryButton}
+                  />
+                </View>
+              </>
             )}
           </View>
-
-          <Typography variant="caption" color={theme.colors.secondaryText}>
-            {formatLastSyncAt(lastSyncAt)}
-          </Typography>
-
-          {pendingCount > 0 && (
-            <>
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                {pendingCount === 1
-                  ? 'A alteração será reenviada automaticamente quando o servidor responder.'
-                  : `${pendingCount} alterações aguardando sincronização`}
-              </Typography>
-
-              <View style={styles.syncActions}>
-                <Button
-                  label="Tentar agora"
-                  variant="secondary"
-                  onPress={() => {
-                    impactFeedback();
-                    syncAll();
-                  }}
-                  style={styles.retryButton}
-                />
-              </View>
-            </>
-          )}
         </View>
-        <Spacer size="md" />
-      </View>
+      )}
 
       <BalanceHeader />
 
       <View style={styles.section}>
         <Button label="+ Nova Transação" onPress={() => router.push('/modal')} />
-        <Spacer size="xl" />
+        <Spacer size="lg" />
         <BudgetRuleWidget />
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.transactionsHeader}>
-          <View style={styles.transactionsTitle}>
-            <Typography variant="title" weight="semibold">
-              Transações Recentes
-            </Typography>
-            {hasActiveFilters && (
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                {activeFilterCount === 1
-                  ? '1 filtro ativo'
-                  : `${activeFilterCount} filtros ativos`}
+      <View style={styles.transactionsBand}>
+        <View style={styles.section}>
+          <View style={styles.transactionsHeader}>
+            <View style={styles.transactionsTitle}>
+              <Typography variant="title" weight="semibold">
+                Transações Recentes
               </Typography>
+              {hasActiveFilters && (
+                <Typography variant="caption" color={theme.colors.secondaryText}>
+                  {activeFilterCount === 1
+                    ? '1 filtro ativo'
+                    : `${activeFilterCount} filtros ativos`}
+                </Typography>
+              )}
+            </View>
+
+            {hasActiveFilters && (
+              <TouchableOpacity
+                style={styles.clearFiltersPill}
+                onPress={clearFilters}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  activeFilterCount === 1
+                    ? 'Limpar 1 filtro ativo'
+                    : `Limpar ${activeFilterCount} filtros ativos`
+                }
+              >
+                <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                  Limpar
+                </Typography>
+                <View style={styles.clearFiltersBadge}>
+                  <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                    {activeFilterCount}
+                  </Typography>
+                </View>
+              </TouchableOpacity>
             )}
           </View>
-
-          {hasActiveFilters && (
-            <TouchableOpacity
-              style={styles.clearFiltersPill}
-              onPress={clearFilters}
-              activeOpacity={0.75}
-              accessibilityRole="button"
-              accessibilityLabel={
-                activeFilterCount === 1
-                  ? 'Limpar 1 filtro ativo'
-                  : `Limpar ${activeFilterCount} filtros ativos`
-              }
-            >
-              <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
-                Limpar
-              </Typography>
-              <View style={styles.clearFiltersBadge}>
-                <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
-                  {activeFilterCount}
-                </Typography>
-              </View>
-            </TouchableOpacity>
-          )}
-        </View>
-        <Spacer size="md" />
+          <Spacer size="md" />
 
             <Input
               placeholder="Buscar por descrição"
@@ -354,6 +373,7 @@ export default function HomeScreen() {
               })}
             </ScrollView>
             <Spacer size="lg" />
+        </View>
       </View>
     </>
   );
@@ -442,10 +462,20 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.expenseBorder,
   },
   syncCard: {
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     gap: theme.spacing.md,
+  },
+  compactSync: {
+    alignSelf: 'flex-end',
+    minHeight: 36,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.incomeBackground,
   },
   syncHeader: {
     flexDirection: 'row',
@@ -453,6 +483,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: theme.spacing.md,
+  },
+  syncTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   },
   syncActions: {
     flexDirection: 'row',
@@ -474,6 +509,13 @@ const styles = StyleSheet.create({
   transactionsTitle: {
     flex: 1,
     gap: theme.spacing.xs,
+  },
+  transactionsBand: {
+    marginTop: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.borderLight,
   },
   filterGroup: {
     flexDirection: 'row',
