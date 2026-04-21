@@ -6,7 +6,6 @@ import {
   createTransaction,
   normalizeTransaction,
 } from '@/src/domain/transactions';
-import { createDemoTransactions } from '@/src/mocks/demoTransactions';
 import { getUserFacingError } from '@/src/services/errorMessages';
 import {
   applyPendingMutations,
@@ -36,19 +35,9 @@ export const useExpenseStore = create<ExpenseState>()(
       error: null,
       lastSyncAt: null,
       syncStatus: 'synced',
-      isUsingMockData: false,
 
       addTransaction: (transaction) => {
         const newTransaction = createTransaction(transaction);
-
-        if (get().isUsingMockData) {
-          set((state) => ({
-            transactions: [...state.transactions, newTransaction],
-            error: null,
-            syncStatus: 'synced',
-          }));
-          return;
-        }
 
         const pendingMutation = createPendingMutation({
           type: 'create',
@@ -65,15 +54,6 @@ export const useExpenseStore = create<ExpenseState>()(
       },
 
       removeTransaction: (id) => {
-        if (get().isUsingMockData) {
-          set((state) => ({
-            transactions: state.transactions.filter((t) => t.id !== id),
-            error: null,
-            syncStatus: 'synced',
-          }));
-          return;
-        }
-
         const pendingMutation = createPendingMutation({
           type: 'delete',
           transactionId: id,
@@ -93,17 +73,6 @@ export const useExpenseStore = create<ExpenseState>()(
         if (!existing) return;
         const updated = normalizeTransaction({ ...existing, ...updatedFields });
 
-        if (get().isUsingMockData) {
-          set((state) => ({
-            transactions: state.transactions.map((t) =>
-              t.id === id ? updated : t
-            ),
-            error: null,
-            syncStatus: 'synced',
-          }));
-          return;
-        }
-
         const pendingMutation = createPendingMutation({
           type: 'update',
           transaction: updated,
@@ -121,16 +90,6 @@ export const useExpenseStore = create<ExpenseState>()(
       },
 
       clearAll: () => {
-        if (get().isUsingMockData) {
-          set({
-            transactions: [],
-            pendingMutations: [],
-            error: null,
-            syncStatus: 'synced',
-          });
-          return;
-        }
-
         const deleteMutations = get().transactions.map((transaction) =>
           createPendingMutation({
             type: 'delete' as const,
@@ -150,34 +109,7 @@ export const useExpenseStore = create<ExpenseState>()(
         get().syncAll({ silent: true });
       },
 
-      loadMockData: () => {
-        set({
-          transactions: createDemoTransactions().map(normalizeTransaction),
-          pendingMutations: [],
-          isUsingMockData: true,
-          error: null,
-          lastSyncAt: null,
-          syncStatus: 'synced',
-        });
-      },
-
-      clearMockData: () => {
-        set({
-          transactions: [],
-          pendingMutations: [],
-          isUsingMockData: false,
-          error: null,
-          lastSyncAt: null,
-          syncStatus: 'synced',
-        });
-      },
-
       syncAll: async (options) => {
-        if (get().isUsingMockData) {
-          set({ isLoading: false, error: null, syncStatus: 'synced' });
-          return;
-        }
-
         if (isFlushingQueue) return;
 
         isFlushingQueue = true;
@@ -267,7 +199,6 @@ export const useExpenseStore = create<ExpenseState>()(
           error: null,
           lastSyncAt: state.lastSyncAt ?? null,
           syncStatus: state.syncStatus ?? 'synced',
-          isUsingMockData: state.isUsingMockData ?? false,
         };
       },
     }

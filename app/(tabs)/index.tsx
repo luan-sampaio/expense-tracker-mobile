@@ -57,9 +57,6 @@ export default function HomeScreen() {
     pendingMutations,
     syncStatus,
     lastSyncAt,
-    isUsingMockData,
-    loadMockData,
-    clearMockData,
     syncAll,
   } = useExpenseStore(
     useShallow((state) => ({
@@ -69,9 +66,6 @@ export default function HomeScreen() {
       pendingMutations: state.pendingMutations,
       syncStatus: state.syncStatus,
       lastSyncAt: state.lastSyncAt,
-      isUsingMockData: state.isUsingMockData,
-      loadMockData: state.loadMockData,
-      clearMockData: state.clearMockData,
       syncAll: state.syncAll,
     }))
   );
@@ -233,36 +227,6 @@ export default function HomeScreen() {
 
       <View style={styles.section}>
         <Button label="+ Nova Transação" onPress={() => router.push('/modal')} />
-        {__DEV__ && (
-          <>
-            <Spacer size="md" />
-            <View style={styles.demoTools}>
-              <View style={styles.demoText}>
-                <Typography variant="caption" weight="semibold" color={theme.colors.primaryText}>
-                  Modo demo local
-                </Typography>
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {isUsingMockData
-                    ? 'Dados mockados ativos, sem sincronizar com o backend.'
-                    : 'Carregue dados locais para testar o front.'}
-                </Typography>
-              </View>
-              <Button
-                label={isUsingMockData ? 'Sair da demo' : 'Carregar demo'}
-                variant={isUsingMockData ? 'secondary' : 'ghost'}
-                onPress={() => {
-                  impactFeedback();
-                  if (isUsingMockData) {
-                    clearMockData();
-                  } else {
-                    loadMockData();
-                  }
-                }}
-                style={styles.demoButton}
-              />
-            </View>
-          </>
-        )}
         <Spacer size="lg" />
         <BudgetRuleWidget />
       </View>
@@ -550,25 +514,6 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignSelf: 'stretch',
     paddingHorizontal: theme.spacing.lg,
-  },
-  demoTools: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    backgroundColor: theme.colors.surface,
-  },
-  demoText: {
-    flex: 1,
-    minWidth: 0,
-    gap: theme.spacing.xs,
-  },
-  demoButton: {
-    minHeight: 44,
-    paddingHorizontal: theme.spacing.md,
   },
   transactionsHeader: {
     minHeight: 48,
