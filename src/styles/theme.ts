@@ -15,7 +15,7 @@ export const theme = {
     // Text — tons escuros quentes
     primaryText: '#2D2A26',
     secondaryText: '#5F5A52',
-    tertiaryText: '#7F786E',
+    tertiaryText: '#6F695F',
 
     // Borders & Dividers — quentes
     border: '#E8E2D9',

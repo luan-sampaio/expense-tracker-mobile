@@ -2,6 +2,7 @@ import { isTransactionWithinPeriod, sumTransactionsByType } from '@/src/domain/t
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency } from '@/src/utils/formatters';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Spacer } from '@/src/components/ui/Spacer';
@@ -26,9 +27,18 @@ function ProgressBar({ label, spent, limit, color }: ProgressBarProps) {
         <Typography variant="caption" weight="semibold">
           {label}
         </Typography>
-        <Typography variant="caption" color={isOverBudget ? theme.colors.expense : theme.colors.secondaryText}>
-          {formatCurrency(s)} / {formatCurrency(l)}
-        </Typography>
+        <View style={styles.progressValue}>
+          {isOverBudget && (
+            <MaterialIcons name="warning" size={15} color={theme.colors.expense} />
+          )}
+          <Typography
+            variant="caption"
+            weight={isOverBudget ? 'semibold' : 'regular'}
+            color={isOverBudget ? theme.colors.expense : theme.colors.secondaryText}
+          >
+            {isOverBudget ? 'Acima do limite · ' : ''}{formatCurrency(s)} / {formatCurrency(l)}
+          </Typography>
+        </View>
       </View>
       <Spacer size="xs" />
       <View style={styles.track}>
@@ -115,6 +125,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  progressValue: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: theme.spacing.xs,
   },
   track: {
     width: '100%',
@@ -126,5 +144,5 @@ const styles = StyleSheet.create({
   fill: {
     height: '100%',
     borderRadius: 4,
-  }
+  },
 });
