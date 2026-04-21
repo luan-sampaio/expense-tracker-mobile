@@ -10,7 +10,7 @@ import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { PendingMutation, Transaction } from '@/src/types';
 import { formatCurrency, formatDate } from '@/src/utils/formatters';
-import { warningFeedback } from '@/src/utils/haptics';
+import { successFeedback, warningFeedback } from '@/src/utils/haptics';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -124,6 +124,7 @@ export default function TransactionDetailsScreen() {
     warningFeedback();
     removeTransaction(transaction.id);
     setIsDeleteDialogVisible(false);
+    successFeedback();
     router.back();
   };
 

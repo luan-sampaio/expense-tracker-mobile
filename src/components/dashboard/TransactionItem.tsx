@@ -5,7 +5,7 @@ import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { Transaction } from '@/src/types';
 import { formatCurrency, formatShortDate } from '@/src/utils/formatters';
-import { warningFeedback } from '@/src/utils/haptics';
+import { successFeedback, warningFeedback } from '@/src/utils/haptics';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -19,6 +19,7 @@ interface Props {
 
 export function TransactionItem({ transaction }: Props) {
   const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
+  const [isDeletedDialogVisible, setIsDeletedDialogVisible] = useState(false);
   const isIncome = transaction.type === 'income';
   const removeTransaction = useExpenseStore((state) => state.removeTransaction);
   const categoryMeta = getCategoryMeta(transaction.category);
@@ -35,6 +36,8 @@ export function TransactionItem({ transaction }: Props) {
     warningFeedback();
     removeTransaction(transaction.id);
     setIsDeleteDialogVisible(false);
+    successFeedback();
+    setIsDeletedDialogVisible(true);
   };
 
   const handleEdit = () => {
@@ -142,6 +145,15 @@ export function TransactionItem({ transaction }: Props) {
         isDanger
         onConfirm={confirmDelete}
         onCancel={() => setIsDeleteDialogVisible(false)}
+      />
+
+      <AppDialog
+        visible={isDeletedDialogVisible}
+        variant="success"
+        title="Transação apagada"
+        message="A exclusão foi registrada com sucesso."
+        confirmLabel="OK"
+        onConfirm={() => setIsDeletedDialogVisible(false)}
       />
     </>
   );
