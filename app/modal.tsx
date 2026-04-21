@@ -17,6 +17,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 function formatDateLabel(date: Date) {
@@ -56,6 +57,7 @@ function formatInitialAmount(value: string | undefined) {
 
 export default function ModalScreen() {
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
   const { addTransaction, updateTransaction } = useExpenseStore(
     useShallow((state) => ({
       addTransaction: state.addTransaction,
@@ -332,7 +334,12 @@ export default function ModalScreen() {
           />
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View
+          style={[
+            styles.footer,
+            { paddingBottom: Math.max(insets.bottom, theme.spacing.lg) },
+          ]}
+        >
           <Button
             label={isEditing ? 'Salvar alterações' : 'Salvar transação'}
             onPress={handleSave}
