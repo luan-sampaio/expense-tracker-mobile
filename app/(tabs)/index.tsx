@@ -2,10 +2,15 @@ import { BalanceHeader } from '@/src/components/dashboard/BalanceHeader';
 import { BudgetRuleWidget } from '@/src/components/dashboard/BudgetRuleWidget';
 import { TransactionItem } from '@/src/components/dashboard/TransactionItem';
 import { AppDialog } from '@/src/components/ui/AppDialog';
+import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
+import { Chip } from '@/src/components/ui/Chip';
 import { Container } from '@/src/components/ui/Container';
+import { EmptyState } from '@/src/components/ui/EmptyState';
+import { InfoBanner } from '@/src/components/ui/InfoBanner';
 import { Input } from '@/src/components/ui/Input';
 import { Period, PeriodFilter } from '@/src/components/ui/PeriodFilter';
+import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
 import { getCategoryMeta } from '@/src/constants/categories';
@@ -20,7 +25,7 @@ import { impactFeedback, successFeedback } from '@/src/utils/haptics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 type TypeFilter = 'all' | TransactionType;
@@ -91,29 +96,26 @@ export default function HomeScreen() {
   const statusConfig = {
     online: {
       label: 'Online',
-      color: theme.colors.info,
-      background: theme.colors.infoBackground,
-      border: theme.colors.info,
+      variant: 'info',
+      iconName: 'sync',
     },
     offline: {
       label: 'Offline',
-      color: theme.colors.expense,
-      background: theme.colors.expenseBackground,
-      border: theme.colors.expenseBorder,
+      variant: 'danger',
+      iconName: 'cloud-off',
     },
     syncing: {
       label: 'Sincronizando',
-      color: theme.colors.warning,
-      background: theme.colors.accentBackground,
-      border: theme.colors.accent,
+      variant: 'warning',
+      iconName: 'sync',
     },
     synced: {
       label: 'Tudo salvo',
-      color: theme.colors.success,
-      background: theme.colors.incomeBackground,
-      border: theme.colors.incomeBorder,
+      variant: 'success',
+      iconName: 'cloud-done',
     },
-  }[syncStatus];
+  } as const;
+  const currentStatusConfig = statusConfig[syncStatus];
   const shouldShowCompactSync = syncStatus === 'synced' && pendingCount === 0 && !error;
   const shouldHideSyncCard = syncStatus === 'offline' && pendingCount === 0 && Boolean(error);
 
@@ -165,30 +167,17 @@ export default function HomeScreen() {
 
       {error && (
         <View style={styles.section}>
-          <View style={styles.errorCard}>
-            <View style={styles.errorHeader}>
-              <View style={styles.errorIcon}>
-                <MaterialIcons name="wifi-off" size={20} color={theme.colors.expense} />
-              </View>
-              <View style={styles.errorText}>
-                <Typography variant="body" weight="semibold" color={theme.colors.expense}>
-                  Não foi possível sincronizar
-                </Typography>
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {error}
-                </Typography>
-              </View>
-            </View>
-            <Button
-              label="Tentar novamente"
-              variant="secondary"
-              onPress={() => {
-                impactFeedback();
-                syncAll();
-              }}
-              style={styles.errorRetryButton}
-            />
-          </View>
+          <InfoBanner
+            title="Não foi possível sincronizar"
+            message={error}
+            variant="danger"
+            iconName="wifi-off"
+            actionLabel="Tentar novamente"
+            onAction={() => {
+              impactFeedback();
+              syncAll();
+            }}
+          />
           <Spacer size="md" />
         </View>
       )}
@@ -204,115 +193,66 @@ export default function HomeScreen() {
         </View>
       ) : !shouldHideSyncCard ? (
         <View style={styles.section}>
-          <View
-            style={[
-              styles.syncCard,
-              {
-                backgroundColor: statusConfig.background,
-                borderColor: statusConfig.border,
-              },
-            ]}
-          >
-            <View style={styles.syncHeader}>
-              <View style={styles.syncTitle}>
-                {syncStatus === 'syncing' ? (
-                  <ActivityIndicator size="small" color={statusConfig.color} />
-                ) : (
-                  <MaterialIcons
-                    name={syncStatus === 'offline' ? 'cloud-off' : 'sync'}
-                    size={20}
-                    color={statusConfig.color}
-                  />
-                )}
-                <Typography variant="body" weight="semibold" color={statusConfig.color}>
-                  {statusConfig.label}
-                </Typography>
-              </View>
-              {pendingCount > 0 && (
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {pendingCount === 1
-                    ? '1 alteração pendente'
-                    : `${pendingCount} alterações pendentes`}
-                </Typography>
-              )}
-            </View>
-
-            <Typography variant="caption" color={theme.colors.secondaryText}>
-              {formatLastSyncAt(lastSyncAt)}
-            </Typography>
-
-            {pendingCount > 0 && (
-              <>
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {pendingCount === 1
-                    ? 'A alteração será reenviada automaticamente quando o servidor responder.'
-                    : `${pendingCount} alterações aguardando sincronização`}
-                </Typography>
-
-                <View style={styles.syncActions}>
-                  <Button
-                    label="Tentar agora"
-                    variant="secondary"
-                    onPress={() => {
-                      impactFeedback();
-                      syncAll();
-                    }}
-                    style={styles.retryButton}
-                  />
-                </View>
-              </>
-            )}
-          </View>
+          <InfoBanner
+            title={currentStatusConfig.label}
+            message={[
+              formatLastSyncAt(lastSyncAt),
+              pendingCount === 1
+                ? '1 alteração pendente'
+                : pendingCount > 1
+                  ? `${pendingCount} alterações pendentes`
+                  : '',
+            ].filter(Boolean).join(' • ')}
+            variant={currentStatusConfig.variant}
+            iconName={currentStatusConfig.iconName}
+            isLoading={syncStatus === 'syncing'}
+            actionLabel={pendingCount > 0 ? 'Tentar agora' : undefined}
+            onAction={pendingCount > 0 ? () => {
+              impactFeedback();
+              syncAll();
+            } : undefined}
+          />
         </View>
       ) : null}
 
       <BalanceHeader />
 
       <View style={styles.section}>
-        <Button label="+ Nova Transação" onPress={() => router.push('/modal')} />
+        <Button
+          label="Nova Transação"
+          iconName="add"
+          onPress={() => router.push('/modal')}
+        />
         <Spacer size="lg" />
         <BudgetRuleWidget />
       </View>
 
       <View style={styles.transactionsBand}>
         <View style={styles.section}>
-          <View style={styles.transactionsHeader}>
-            <View style={styles.transactionsTitle}>
-              <Typography variant="title" weight="semibold">
-                Transações Recentes
-              </Typography>
-              {hasActiveFilters && (
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {activeFilterCount === 1
-                    ? '1 filtro ativo'
-                    : `${activeFilterCount} filtros ativos`}
-                </Typography>
-              )}
-            </View>
-
-            {hasActiveFilters && (
-              <TouchableOpacity
-                style={styles.clearFiltersPill}
+          <SectionHeader
+            title="Transações Recentes"
+            subtitle={
+              hasActiveFilters
+                ? activeFilterCount === 1
+                  ? '1 filtro ativo'
+                  : `${activeFilterCount} filtros ativos`
+                : undefined
+            }
+            action={hasActiveFilters ? (
+              <Button
+                label="Limpar"
+                variant="ghost"
+                size="sm"
+                iconName="close"
                 onPress={clearFilters}
-                activeOpacity={0.75}
-                accessibilityRole="button"
                 accessibilityLabel={
                   activeFilterCount === 1
                     ? 'Limpar 1 filtro ativo'
                     : `Limpar ${activeFilterCount} filtros ativos`
                 }
-              >
-                <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
-                  Limpar
-                </Typography>
-                <View style={styles.clearFiltersBadge}>
-                  <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
-                    {activeFilterCount}
-                  </Typography>
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
+              />
+            ) : undefined}
+          />
           <Spacer size="sm" />
 
           <View style={styles.filterToolbar}>
@@ -349,11 +289,7 @@ export default function HomeScreen() {
                 color={(isFiltersExpanded || activeFilterCount > 0) ? theme.colors.primary : theme.colors.secondaryText}
               />
               {activeFilterCount > 0 && (
-                <View style={styles.filterCountBadge}>
-                  <Typography variant="caption" weight="bold" color={theme.colors.surface}>
-                    {activeFilterCount}
-                  </Typography>
-                </View>
+                <Badge label={activeFilterCount} variant="primary" size="sm" style={styles.filterCountBadge} />
               )}
             </TouchableOpacity>
           </View>
@@ -370,29 +306,15 @@ export default function HomeScreen() {
                   const isSelected = selectedType === filter.id;
 
                   return (
-                    <TouchableOpacity
+                    <Chip
                       key={filter.id}
-                      style={[
-                        styles.filterChip,
-                        isSelected && styles.filterChipSelected,
-                      ]}
+                      label={filter.label}
+                      selected={isSelected}
                       onPress={() => {
-                        impactFeedback();
                         setSelectedType(filter.id);
                       }}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
                       accessibilityLabel={`Filtrar por ${filter.label.toLowerCase()}`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <Typography
-                        variant="caption"
-                        weight={isSelected ? 'semibold' : 'regular'}
-                        color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
-                      >
-                        {filter.label}
-                      </Typography>
-                    </TouchableOpacity>
+                    />
                   );
                 })}
               </View>
@@ -402,56 +324,28 @@ export default function HomeScreen() {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.categoryFilterContent}
               >
-                <TouchableOpacity
-                  style={[
-                    styles.filterChip,
-                    selectedCategory === 'all' && styles.filterChipSelected,
-                  ]}
+                <Chip
+                  label="Todas categorias"
+                  selected={selectedCategory === 'all'}
                   onPress={() => {
-                    impactFeedback();
                     setSelectedCategory('all');
                   }}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
                   accessibilityLabel="Mostrar todas as categorias"
-                  accessibilityState={{ selected: selectedCategory === 'all' }}
-                >
-                  <Typography
-                    variant="caption"
-                    weight={selectedCategory === 'all' ? 'semibold' : 'regular'}
-                    color={selectedCategory === 'all' ? theme.colors.primary : theme.colors.secondaryText}
-                  >
-                    Todas categorias
-                  </Typography>
-                </TouchableOpacity>
+                />
 
                 {categoryFilters.map((category) => {
                   const isSelected = selectedCategory === category;
 
                   return (
-                    <TouchableOpacity
+                    <Chip
                       key={category}
-                      style={[
-                        styles.filterChip,
-                        isSelected && styles.filterChipSelected,
-                      ]}
+                      label={getCategoryMeta(category).label}
+                      selected={isSelected}
                       onPress={() => {
-                        impactFeedback();
                         setSelectedCategory(category);
                       }}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
                       accessibilityLabel={`Filtrar categoria ${getCategoryMeta(category).label}`}
-                      accessibilityState={{ selected: isSelected }}
-                    >
-                      <Typography
-                        variant="caption"
-                        weight={isSelected ? 'semibold' : 'regular'}
-                        color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
-                      >
-                        {getCategoryMeta(category).label}
-                      </Typography>
-                    </TouchableOpacity>
+                    />
                   );
                 })}
               </ScrollView>
@@ -468,30 +362,18 @@ export default function HomeScreen() {
       <TransactionSkeletonList />
     </View>
   ) : (
-    <View style={[styles.section, styles.emptyCard]}>
-      <View style={styles.emptyIconContainer}>
-        <MaterialIcons
-          name={hasActiveFilters ? 'search-off' : 'account-balance-wallet'}
-          size={34}
-          color={theme.colors.primary}
-        />
-      </View>
-      <Spacer size="sm" />
-      <Typography variant="body" weight="semibold" color={theme.colors.primaryText} align="center">
-        {hasActiveFilters ? 'Nada encontrado' : 'Comece pelo primeiro lançamento'}
-      </Typography>
-      <Spacer size="xs" />
-      <Typography variant="body" color={theme.colors.secondaryText} align="center">
-        {hasActiveFilters
-          ? 'Tente ajustar a busca, período, tipo ou categoria para encontrar uma transação.'
-          : 'Adicione uma receita ou despesa para acompanhar seu saldo e seus gastos.'}
-      </Typography>
-      <Spacer size="lg" />
-      <Button
-        label={hasActiveFilters ? 'Limpar filtros' : 'Adicionar primeira transação'}
-        variant={hasActiveFilters ? 'secondary' : 'primary'}
-        onPress={hasActiveFilters ? clearFilters : () => router.push('/modal')}
-        style={styles.emptyButton}
+    <View style={styles.section}>
+      <EmptyState
+        iconName={hasActiveFilters ? 'search-off' : 'account-balance-wallet'}
+        title={hasActiveFilters ? 'Nada encontrado' : 'Comece pelo primeiro lançamento'}
+        message={
+          hasActiveFilters
+            ? 'Tente ajustar a busca, período, tipo ou categoria para encontrar uma transação.'
+            : 'Adicione uma receita ou despesa para acompanhar seu saldo e seus gastos.'
+        }
+        actionLabel={hasActiveFilters ? 'Limpar filtros' : 'Adicionar primeira transação'}
+        actionVariant={hasActiveFilters ? 'secondary' : 'primary'}
+        onAction={hasActiveFilters ? clearFilters : () => router.push('/modal')}
       />
     </View>
   );
@@ -527,61 +409,6 @@ const styles = StyleSheet.create({
   section: {
     paddingHorizontal: theme.spacing.lg,
   },
-  emptyCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.xxl,
-    ...theme.shadows.sm,
-  },
-  emptyIconContainer: {
-    width: 64,
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.primaryBackground,
-  },
-  emptyButton: {
-    alignSelf: 'stretch',
-  },
-  errorCard: {
-    backgroundColor: theme.colors.expenseBackground,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.expenseBorder,
-    gap: theme.spacing.md,
-  },
-  errorHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: theme.spacing.md,
-  },
-  errorIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.surface,
-  },
-  errorText: {
-    flex: 1,
-    minWidth: 0,
-    gap: theme.spacing.xs,
-  },
-  errorRetryButton: {
-    minHeight: 44,
-  },
-  syncCard: {
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    gap: theme.spacing.md,
-  },
   compactSync: {
     alignSelf: 'flex-end',
     minHeight: 36,
@@ -591,39 +418,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.pill,
     backgroundColor: theme.colors.incomeBackground,
-  },
-  syncHeader: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  syncTitle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  syncActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing.sm,
-  },
-  retryButton: {
-    minHeight: 44,
-    alignSelf: 'stretch',
-    paddingHorizontal: theme.spacing.lg,
-  },
-  transactionsHeader: {
-    minHeight: 48,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-  },
-  transactionsTitle: {
-    flex: 1,
-    gap: theme.spacing.xs,
   },
   transactionsBand: {
     marginTop: theme.spacing.xl,
@@ -695,39 +489,6 @@ const styles = StyleSheet.create({
   categoryFilterContent: {
     gap: theme.spacing.sm,
     paddingRight: theme.spacing.lg,
-  },
-  filterChip: {
-    minHeight: 34,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceSecondary,
-  },
-  filterChipSelected: {
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryBackground,
-  },
-  clearFiltersPill: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryBackground,
-  },
-  clearFiltersBadge: {
-    minWidth: 22,
-    minHeight: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.sm,
-    backgroundColor: theme.colors.surface,
   },
   skeletonList: {
     gap: theme.spacing.sm,

@@ -8,7 +8,6 @@ import {
   Modal,
   Pressable,
   StyleSheet,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -90,17 +89,13 @@ export function AppDialog({
           <Spacer size="xl" />
           <View style={styles.actions}>
             {cancelLabel && onCancel && (
-              <TouchableOpacity
+              <Button
+                label={cancelLabel}
+                variant="secondary"
                 style={styles.cancelButton}
                 onPress={onCancel}
-                activeOpacity={0.75}
-                accessibilityRole="button"
                 accessibilityLabel={cancelLabel}
-              >
-                <Typography variant="body" weight="semibold" color={theme.colors.secondaryText}>
-                  {cancelLabel}
-                </Typography>
-              </TouchableOpacity>
+              />
             )}
             <Button
               label={confirmLabel}
@@ -146,13 +141,6 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
-    minHeight: 52,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceSecondary,
   },
   confirmButton: {
     flex: 1,

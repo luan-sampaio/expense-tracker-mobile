@@ -1,4 +1,5 @@
 import { AppDialog } from '@/src/components/ui/AppDialog';
+import { Badge } from '@/src/components/ui/Badge';
 import { CategoryIcon } from '@/src/components/ui/CategoryIcon';
 import { getCategoryMeta } from '@/src/constants/categories';
 import { getPendingTransactionId } from '@/src/domain/transactions';
@@ -164,12 +165,7 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
               {pendingLabel && (
                 <>
                   <Spacer size="xs" />
-                  <View style={styles.pendingBadge}>
-                    <View style={styles.pendingDot} />
-                    <Typography variant="caption" color={theme.colors.warning} weight="semibold">
-                      {pendingLabel}
-                    </Typography>
-                  </View>
+                  <Badge label={pendingLabel} variant="warning" style={styles.pendingBadge} />
                 </>
               )}
             </View>
@@ -245,19 +241,7 @@ const styles = StyleSheet.create({
   },
   pendingBadge: {
     alignSelf: 'flex-start',
-    minHeight: 22,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.pill,
-    backgroundColor: theme.colors.accentBackground,
-  },
-  pendingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: theme.colors.warning,
   },
   amountBlock: {
     minWidth: 92,

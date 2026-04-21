@@ -1,8 +1,7 @@
-import { impactFeedback } from '@/src/utils/haptics';
+import { Chip } from '@/src/components/ui/Chip';
 import { theme } from '@/src/styles/theme';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Typography } from '@/src/components/ui/Typography';
+import { StyleSheet, View } from 'react-native';
 
 export type Period = 'week' | 'month' | 'year' | 'all';
 
@@ -24,29 +23,14 @@ export function PeriodFilter({ selectedPeriod, onSelectPeriod }: PeriodFilterPro
       {PERIODS.map((period) => {
         const isSelected = selectedPeriod === period.id;
         return (
-          <TouchableOpacity
+          <Chip
             key={period.id}
-            style={[
-              styles.periodButton,
-              isSelected && styles.periodButtonSelected,
-            ]}
-            onPress={() => {
-              impactFeedback();
-              onSelectPeriod(period.id);
-            }}
-            activeOpacity={0.7}
-            accessibilityRole="button"
+            label={period.label}
+            selected={isSelected}
+            style={styles.periodButton}
+            onPress={() => onSelectPeriod(period.id)}
             accessibilityLabel={`Filtrar período ${period.label}`}
-            accessibilityState={{ selected: isSelected }}
-          >
-            <Typography
-              variant="body"
-              weight={isSelected ? 'semibold' : 'regular'}
-              color={isSelected ? theme.colors.primary : theme.colors.secondaryText}
-            >
-              {period.label}
-            </Typography>
-          </TouchableOpacity>
+          />
         );
       })}
     </View>
@@ -66,13 +50,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 72,
     minHeight: 44,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.sm,
-    alignItems: 'center',
-  },
-  periodButtonSelected: {
-    backgroundColor: theme.colors.surface,
-    ...theme.shadows.sm,
   },
 });
