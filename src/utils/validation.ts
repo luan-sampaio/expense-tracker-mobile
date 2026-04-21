@@ -19,7 +19,7 @@ export function validateTransactionForm(values: TransactionFormValues): {
     errors.amount = 'Valor é obrigatório';
     isValid = false;
   } else {
-    const numeric = parseFloat(values.amount.replace(',', '.'));
+    const numeric = parseAmount(values.amount);
     if (isNaN(numeric) || numeric <= 0) {
       errors.amount = 'Valor deve ser um número positivo';
       isValid = false;
@@ -35,5 +35,10 @@ export function validateTransactionForm(values: TransactionFormValues): {
 }
 
 export function parseAmount(value: string): number {
-  return parseFloat(value.replace(',', '.'));
+  const currencyFreeValue = value.replace(/[^\d,.-]/g, '');
+  const normalized = currencyFreeValue.includes(',')
+    ? currencyFreeValue.replace(/\./g, '').replace(',', '.')
+    : currencyFreeValue;
+
+  return parseFloat(normalized);
 }
