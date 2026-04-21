@@ -29,8 +29,12 @@ export function createTransactionId() {
   return Date.now().toString(36) + Math.random().toString(36).substring(2, 9);
 }
 
+export function roundCurrency(value: number) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
 export function normalizeTransaction(transaction: Transaction): Transaction {
-  return { ...transaction, amount: Number(transaction.amount) };
+  return { ...transaction, amount: roundCurrency(Number(transaction.amount)) };
 }
 
 export function createTransaction(transaction: Omit<Transaction, 'id'>): Transaction {
@@ -55,11 +59,13 @@ export function sortTransactionsByDate(transactions: Transaction[]) {
 }
 
 export function calculateBalance(transactions: Transaction[]) {
-  return transactions.reduce((total, transaction) => {
+  const total = transactions.reduce((sum, transaction) => {
     return transaction.type === 'income'
-      ? total + transaction.amount
-      : total - transaction.amount;
+      ? sum + transaction.amount
+      : sum - transaction.amount;
   }, 0);
+
+  return roundCurrency(total);
 }
 
 export function sumTransactionsByType(
@@ -68,14 +74,16 @@ export function sumTransactionsByType(
 ) {
   return transactions
     .filter((transaction) => transaction.type === type)
-    .reduce((total, transaction) => total + transaction.amount, 0);
+    .reduce((total, transaction) => roundCurrency(total + transaction.amount), 0);
 }
 
 export function groupExpensesByCategory(transactions: Transaction[]) {
   return transactions
     .filter((transaction) => transaction.type === 'expense')
     .reduce((acc, transaction) => {
-      acc[transaction.category] = (acc[transaction.category] ?? 0) + transaction.amount;
+      acc[transaction.category] = roundCurrency(
+        (acc[transaction.category] ?? 0) + transaction.amount
+      );
       return acc;
     }, {} as Record<string, number>);
 }
@@ -131,4 +139,3 @@ export function getPendingTransactionId(mutation: PendingMutation) {
     ? mutation.transactionId
     : mutation.transaction.id;
 }
-

@@ -145,13 +145,17 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
               </Typography>
               <Spacer size="xs" />
               <View style={styles.metaRow}>
-                <View style={styles.categoryLabel}>
-                  <Typography variant="caption" color={categoryMeta.color} weight="semibold" numberOfLines={1}>
+                <View style={styles.metaText}>
+                  <Typography
+                    variant="caption"
+                    color={categoryMeta.color}
+                    weight="semibold"
+                    numberOfLines={1}
+                    style={styles.categoryLabel}
+                  >
                     {categoryMeta.label}
                   </Typography>
-                </View>
-                <View style={styles.metaDot} />
-                <View style={styles.dateLabel}>
+                  <View style={styles.metaDot} />
                   <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
                     {dateStr}
                   </Typography>
@@ -242,12 +246,17 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.md,
+  },
+  metaText: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.xs,
   },
   categoryLabel: {
-    maxWidth: '56%',
-  },
-  dateLabel: {
     flexShrink: 1,
   },
   metaDot: {
@@ -273,7 +282,8 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.warning,
   },
   amountBlock: {
-    maxWidth: 136,
+    minWidth: 108,
+    maxWidth: 128,
     alignItems: 'flex-end',
     gap: theme.spacing.xs,
   },
