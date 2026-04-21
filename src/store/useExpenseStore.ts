@@ -18,6 +18,14 @@ import { successFeedback } from '@/src/utils/haptics';
 
 let isFlushingQueue = false;
 
+function ensureTransactionList(data: unknown) {
+  if (Array.isArray(data)) {
+    return data.map(normalizeTransaction);
+  }
+
+  throw new Error('Resposta inesperada do servidor ao carregar transações.');
+}
+
 export const useExpenseStore = create<ExpenseState>()(
   persist(
     (set, get) => ({
@@ -115,7 +123,10 @@ export const useExpenseStore = create<ExpenseState>()(
           const syncResponse = await transactionsApi.sync(pendingMutations);
 
           if (syncResponse) {
-            const appliedMutationIds = syncResponse.results
+            const syncResults = Array.isArray(syncResponse.results)
+              ? syncResponse.results
+              : [];
+            const appliedMutationIds = syncResults
               .filter((result) => result.status === 'applied')
               .map((result) => result.client_operation_id);
 
@@ -127,8 +138,10 @@ export const useExpenseStore = create<ExpenseState>()(
             }));
           }
 
-          const data = syncResponse?.transactions ?? await transactionsApi.list();
-          const normalized = data.map(normalizeTransaction); // backend retorna Decimal como string
+          const data = Array.isArray(syncResponse?.transactions)
+            ? syncResponse.transactions
+            : await transactionsApi.list();
+          const normalized = ensureTransactionList(data); // backend retorna Decimal como string
           const localWithPending = applyPendingMutations(
             normalized,
             get().pendingMutations
