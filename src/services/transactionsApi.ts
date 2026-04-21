@@ -23,6 +23,29 @@ export type TransactionSyncResponse = {
   transactions: Transaction[];
 };
 
+type TransactionsListResponse =
+  | Transaction[]
+  | {
+      results?: Transaction[];
+      transactions?: Transaction[];
+    };
+
+function extractTransactions(data: TransactionsListResponse): Transaction[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data.results)) {
+    return data.results;
+  }
+
+  if (Array.isArray(data.transactions)) {
+    return data.transactions;
+  }
+
+  return [];
+}
+
 function toSyncOperation(mutation: PendingMutation): TransactionSyncOperation {
   if (mutation.type === 'create') {
     return {
@@ -48,7 +71,10 @@ function toSyncOperation(mutation: PendingMutation): TransactionSyncOperation {
 }
 
 export const transactionsApi = {
-  list: () => api.get<Transaction[]>(TRANSACTIONS_ENDPOINT),
+  list: async () => {
+    const data = await api.get<TransactionsListResponse>(TRANSACTIONS_ENDPOINT);
+    return extractTransactions(data);
+  },
 
   create: (transaction: Transaction) =>
     api.post<Transaction>(TRANSACTIONS_ENDPOINT, transaction),
