@@ -41,15 +41,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: theme.colors.surfaceSecondary,
-    borderRadius: theme.borderRadius.md,
-    padding: 4,
-    gap: 4,
+    gap: theme.spacing.sm,
   },
   periodButton: {
-    flex: 1,
-    minWidth: 72,
+    minWidth: 76,
     minHeight: 44,
-    borderRadius: theme.borderRadius.sm,
   },
 });

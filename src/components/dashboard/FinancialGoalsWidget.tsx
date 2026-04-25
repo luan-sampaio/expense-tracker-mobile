@@ -103,12 +103,18 @@ export function FinancialGoalsWidget() {
   return (
     <>
       <View style={styles.container}>
+        <View style={styles.headerEyebrow}>
+          <MaterialIcons name="flag-circle" size={16} color={theme.colors.primary} />
+          <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+            Planejamento financeiro
+          </Typography>
+        </View>
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <Typography variant="body" weight="bold">
+            <Typography variant="title" weight="bold">
               Metas financeiras
             </Typography>
-            <Typography variant="caption" color={theme.colors.secondaryText}>
+            <Typography variant="body" color={theme.colors.secondaryText}>
               Acompanhe reservas, investimentos e objetivos.
             </Typography>
           </View>
@@ -146,21 +152,37 @@ export function FinancialGoalsWidget() {
                 accessibilityLabel={`Editar meta ${goal.name}`}
               >
                 <View style={styles.goalHeader}>
-                  <Typography variant="body" weight="semibold" style={styles.goalName}>
-                    {goal.name}
-                  </Typography>
-                  <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
-                    {goal.progress.toFixed(0)}%
-                  </Typography>
+                  <View style={styles.goalTitleBlock}>
+                    <View style={styles.goalIconWrap}>
+                      <MaterialIcons name="flag" size={18} color={theme.colors.primary} />
+                    </View>
+                    <Typography variant="body" weight="semibold" style={styles.goalName}>
+                      {goal.name}
+                    </Typography>
+                  </View>
+                  <View style={styles.goalPercentBadge}>
+                    <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                      {goal.progress.toFixed(0)}%
+                    </Typography>
+                  </View>
                 </View>
                 <Spacer size="xs" />
                 <View style={styles.track}>
                   <View style={[styles.fill, { width: `${goal.progress}%` }]} />
                 </View>
                 <Spacer size="xs" />
-                <Typography variant="caption" color={theme.colors.secondaryText}>
-                  {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
-                </Typography>
+                <View style={styles.goalValues}>
+                  <View style={styles.goalValueChip}>
+                    <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+                      Guardado {formatCurrency(goal.currentAmount)}
+                    </Typography>
+                  </View>
+                  <View style={styles.goalValueChip}>
+                    <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+                      Meta {formatCurrency(goal.targetAmount)}
+                    </Typography>
+                  </View>
+                </View>
               </Pressable>
             ))}
           </View>
@@ -222,10 +244,18 @@ export function FinancialGoalsWidget() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.sm,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    gap: theme.spacing.sm,
+    ...theme.shadows.md,
+  },
+  headerEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   },
   header: {
     flexDirection: 'row',
@@ -248,8 +278,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     backgroundColor: theme.colors.primaryBackground,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
   },
   goalList: {
     gap: theme.spacing.sm,
@@ -257,29 +289,66 @@ const styles = StyleSheet.create({
   },
   goalItem: {
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
     backgroundColor: theme.colors.surfaceElevated,
+    ...theme.shadows.sm,
   },
   goalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.md,
   },
+  goalTitleBlock: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  goalIconWrap: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.primaryBackground,
+  },
   goalName: {
     flex: 1,
   },
+  goalPercentBadge: {
+    minHeight: 28,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.primaryBackground,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
   track: {
-    height: 8,
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 5,
     overflow: 'hidden',
     backgroundColor: theme.colors.surfaceSecondary,
   },
   fill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
     backgroundColor: theme.colors.primary,
+  },
+  goalValues: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  goalValueChip: {
+    minHeight: 28,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.surfaceSecondary,
   },
   backdrop: {
     flex: 1,
@@ -291,7 +360,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 380,
     alignSelf: 'center',
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.lg,
     backgroundColor: theme.colors.surface,
     ...theme.shadows.lg,

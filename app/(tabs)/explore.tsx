@@ -25,6 +25,7 @@ import {
   View,
 } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const SUMMARY_VISIBILITY_STORAGE_KEY = 'summary-section-visibility';
 
@@ -87,32 +88,54 @@ function MetricCard({
   value,
   iconName,
   color,
-  backgroundColor,
 }: {
   label: string;
   value: string;
   iconName: React.ComponentProps<typeof MaterialIcons>['name'];
   color: string;
-  backgroundColor: string;
 }) {
   return (
-    <View style={[styles.metricCard, { backgroundColor }]}>
-      <View style={[styles.metricIcon, { backgroundColor: theme.colors.surface }]}>
-        <MaterialIcons name={iconName} size={20} color={color} />
-      </View>
-      <View style={styles.metricText}>
+    <View style={styles.metricCard}>
+      <View style={styles.metricLead}>
+        <View style={styles.metricIcon}>
+          <MaterialIcons name={iconName} size={20} color={color} />
+        </View>
         <Typography variant="caption" color={theme.colors.secondaryText}>
           {label}
         </Typography>
-        <Typography variant="title" weight="bold" color={color} numberOfLines={1}>
-          {value}
-        </Typography>
       </View>
+      <Typography variant="body" weight="bold" color={color} numberOfLines={1} style={styles.metricValue}>
+        {value}
+      </Typography>
+    </View>
+  );
+}
+
+function SummaryGlance({
+  label,
+  value,
+  toneColor,
+  backgroundColor,
+}: {
+  label: string;
+  value: string;
+  toneColor: string;
+  backgroundColor: string;
+}) {
+  return (
+    <View style={[styles.glanceCard, { backgroundColor }]}>
+      <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+        {label}
+      </Typography>
+      <Typography variant="body" weight="bold" color={toneColor} numberOfLines={1}>
+        {value}
+      </Typography>
     </View>
   );
 }
 
 export default function ExploreScreen() {
+  const insets = useSafeAreaInsets();
   const transactions = useExpenseStore((state) => state.transactions);
   const [selectedMonth, setSelectedMonth] = useState(() => getMonthStart(new Date()));
   const [sectionVisibility, setSectionVisibility] = useState<SummarySectionVisibility>(DEFAULT_SUMMARY_VISIBILITY);
@@ -176,6 +199,8 @@ export default function ExploreScreen() {
     : metrics.expenseComparison.direction === 'down'
       ? 'trending-down'
       : 'trending-flat';
+  const balanceToneLabel = metrics.balance >= 0 ? 'Saldo respirando' : 'Saldo apertado';
+  const balanceToneColor = metrics.balance >= 0 ? theme.colors.primary : theme.colors.expense;
 
   const chartConfig = {
     backgroundGradientFrom: theme.colors.background,
@@ -218,14 +243,45 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.screen}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        <View style={styles.header}>
-          <Typography variant="heading" weight="bold">
-            Resumo mensal
-          </Typography>
-          <Typography variant="body" color={theme.colors.secondaryText}>
-            Receitas, gastos, aportes e saldo por período
-          </Typography>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.scroll,
+          {
+            paddingTop: insets.top + theme.spacing.md,
+            paddingBottom: theme.spacing.xxl + insets.bottom + theme.spacing.lg,
+          },
+        ]}
+      >
+        <View style={styles.headerCard}>
+          <View style={styles.headerEyebrow}>
+            <MaterialIcons name="insights" size={16} color={theme.colors.primary} />
+            <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+              Leitura do período
+            </Typography>
+          </View>
+          <View style={styles.header}>
+            <Typography variant="heading" weight="bold">
+              Resumo mensal
+            </Typography>
+            <Typography variant="body" color={theme.colors.secondaryText}>
+              Receitas, gastos, aportes e saldo organizados com mais contexto.
+            </Typography>
+          </View>
+          <View style={styles.glanceRow}>
+            <SummaryGlance
+              label="Clima do mês"
+              value={balanceToneLabel}
+              toneColor={balanceToneColor}
+              backgroundColor={theme.colors.surface}
+            />
+            <SummaryGlance
+              label="Média diária"
+              value={formatCurrency(dailyAverage)}
+              toneColor={theme.colors.info}
+              backgroundColor={theme.colors.surface}
+            />
+          </View>
         </View>
 
         <View style={styles.monthSelector}>
@@ -280,28 +336,24 @@ export default function ExploreScreen() {
             value={formatCurrency(metrics.income)}
             iconName="arrow-upward"
             color={theme.colors.income}
-            backgroundColor={theme.colors.incomeBackground}
           />
           <MetricCard
             label="Despesas comuns"
             value={formatCurrency(metrics.expenses)}
             iconName="arrow-downward"
             color={theme.colors.expense}
-            backgroundColor={theme.colors.expenseBackground}
           />
           <MetricCard
             label="Aportes"
             value={formatCurrency(metrics.contributions)}
             iconName="savings"
             color={theme.colors.primary}
-            backgroundColor={theme.colors.primaryBackground}
           />
           <MetricCard
             label="Média diária"
             value={formatCurrency(dailyAverage)}
             iconName="calendar-today"
             color={theme.colors.info}
-            backgroundColor={theme.colors.infoBackground}
           />
         </View>
 
@@ -463,12 +515,34 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flexGrow: 1,
-    paddingBottom: theme.spacing.xxl,
     paddingHorizontal: theme.spacing.lg,
   },
-  header: {
-    paddingTop: theme.spacing.xxl,
+  headerCard: {
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surfaceElevated,
+    gap: theme.spacing.sm,
+    ...theme.shadows.sm,
+  },
+  headerEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: theme.spacing.xs,
+  },
+  header: {
+    gap: theme.spacing.xs,
+  },
+  glanceRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+  glanceCard: {
+    flexGrow: 1,
+    minWidth: 140,
+    gap: 2,
+    paddingVertical: theme.spacing.xs,
   },
   monthSelector: {
     minHeight: 56,
@@ -476,6 +550,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   monthButton: {
     width: theme.touchTarget.min,
@@ -496,9 +571,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    backgroundColor: theme.colors.surface,
-    ...theme.shadows.sm,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surfaceElevated,
+    ...theme.shadows.md,
   },
   balanceAmount: {
     width: '100%',
@@ -514,14 +589,15 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surfaceSecondary,
   },
   metricsGrid: {
-    marginTop: theme.spacing.lg,
+    marginTop: theme.spacing.md,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
   sectionToggles: {
     marginTop: theme.spacing.lg,
     gap: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
   },
   sectionToggleList: {
     flexDirection: 'row',
@@ -529,29 +605,24 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   metricCard: {
-    flexGrow: 1,
     flexBasis: '48%',
-    minWidth: 150,
-    minHeight: 96,
+    flexGrow: 1,
+    minWidth: 140,
+    minHeight: 64,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: theme.spacing.xs,
+  },
+  metricLead: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
+    gap: theme.spacing.xs,
   },
   metricIcon: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.md,
+    width: 18,
   },
-  metricText: {
-    flex: 1,
-    minWidth: 0,
-    gap: theme.spacing.xs,
+  metricValue: {
+    paddingLeft: 22,
   },
   emptyState: {
     marginTop: theme.spacing.xl,
@@ -562,13 +633,18 @@ const styles = StyleSheet.create({
   surfaceCard: {
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     ...theme.shadows.sm,
   },
   chartWrapper: {
     alignItems: 'center',
     overflow: 'hidden',
+    marginTop: theme.spacing.sm,
     paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.sm,
   },
   legendList: {
     alignSelf: 'stretch',
@@ -579,6 +655,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
   },
   legendDot: {
     width: 10,

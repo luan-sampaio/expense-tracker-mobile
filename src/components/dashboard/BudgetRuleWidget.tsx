@@ -394,10 +394,28 @@ export function BudgetRuleWidget() {
   return (
     <>
       <View style={styles.container}>
+        <View style={styles.headerIntro}>
+          <View style={styles.headerEyebrow}>
+            <MaterialIcons name="pie-chart" size={16} color={theme.colors.primary} />
+            <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+              Orçamento do mês
+            </Typography>
+          </View>
+          <View style={styles.summaryBadge}>
+            <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+              Receita base {formatCurrency(budget.income)}
+            </Typography>
+          </View>
+        </View>
         <View style={styles.header}>
-          <Typography variant="body" weight="bold" style={styles.headerTitle}>
-            Orçamento {getPresetLabel(budgetSettings)}
-          </Typography>
+          <View style={styles.headerTitleBlock}>
+            <Typography variant="title" weight="bold" style={styles.headerTitle}>
+              Orçamento {getPresetLabel(budgetSettings)}
+            </Typography>
+            <Typography variant="caption" color={theme.colors.secondaryText}>
+              Metas do mês baseadas nas receitas e nos grupos escolhidos em cada despesa.
+            </Typography>
+          </View>
           <View style={styles.headerActions}>
             <Button
               label="Ocultar"
@@ -416,10 +434,6 @@ export function BudgetRuleWidget() {
             />
           </View>
         </View>
-        <Spacer size="xs" />
-        <Typography variant="caption" color={theme.colors.secondaryText}>
-          Metas do mês baseadas nas receitas e nos grupos escolhidos em cada despesa.
-        </Typography>
         <Spacer size="md" />
 
         {allocations.map((allocation, index) => (
@@ -596,10 +610,33 @@ export function BudgetRuleWidget() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.surfaceElevated,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    ...theme.shadows.sm,
+    borderRadius: theme.borderRadius.xl,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    gap: theme.spacing.sm,
+    ...theme.shadows.md,
+  },
+  headerIntro: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  headerEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  summaryBadge: {
+    minHeight: 30,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.pill,
+    backgroundColor: theme.colors.surfaceSecondary,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   header: {
     flexDirection: 'row',
@@ -607,10 +644,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: theme.spacing.sm,
   },
-  headerTitle: {
+  headerTitleBlock: {
     flex: 1,
     minWidth: 0,
-    paddingTop: theme.spacing.xs,
+    gap: theme.spacing.xs,
+  },
+  headerTitle: {
+    minWidth: 0,
   },
   headerText: {
     flex: 1,
@@ -625,6 +665,11 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     width: '100%',
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -641,14 +686,14 @@ const styles = StyleSheet.create({
   },
   track: {
     width: '100%',
-    height: 8,
+    height: 10,
     backgroundColor: theme.colors.surfaceSecondary,
-    borderRadius: 4,
+    borderRadius: 5,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: 5,
   },
   backdrop: {
     flex: 1,
@@ -661,7 +706,7 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     maxHeight: '86%',
     alignSelf: 'center',
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.xl,
     backgroundColor: theme.colors.surface,
     ...theme.shadows.lg,
   },
@@ -695,7 +740,7 @@ const styles = StyleSheet.create({
   presetSummary: {
     gap: theme.spacing.sm,
     padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
     backgroundColor: theme.colors.surfaceElevated,
@@ -710,8 +755,8 @@ const styles = StyleSheet.create({
   },
   groupEditor: {
     gap: theme.spacing.sm,
-    padding: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.borderLight,
     backgroundColor: theme.colors.surfaceElevated,

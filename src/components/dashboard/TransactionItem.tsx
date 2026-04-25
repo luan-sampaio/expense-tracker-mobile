@@ -8,6 +8,7 @@ import { theme } from '@/src/styles/theme';
 import { PendingMutation, Transaction } from '@/src/types';
 import { formatCurrency, formatFriendlyDate } from '@/src/utils/formatters';
 import { impactFeedback, warningFeedback } from '@/src/utils/haptics';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
@@ -152,11 +153,25 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
           accessibilityLabel={`Abrir detalhes de ${transaction.description}, ${categoryMeta.label}, ${formattedAmount}`}
         >
           <View style={styles.leftContent}>
-            <View style={[styles.iconFrame, { borderColor: categoryMeta.color }]}>
-              <CategoryIcon category={categoryMeta} />
+            <View style={styles.iconFrame}>
+              <CategoryIcon category={categoryMeta} size="sm" />
             </View>
             <Spacer horizontal size="md" />
             <View style={styles.textContent}>
+              <View style={styles.metaRow}>
+                <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
+                  {dateStr}
+                </Typography>
+                <Typography variant="caption" color={theme.colors.tertiaryText} numberOfLines={1}>
+                  ·
+                </Typography>
+                <View style={styles.kindMeta}>
+                  <Typography variant="caption" weight="medium" color={theme.colors.tertiaryText}>
+                    {transactionKindLabel}
+                  </Typography>
+                </View>
+              </View>
+              <Spacer size="xs" />
               <Typography
                 variant="body"
                 weight="semibold"
@@ -166,18 +181,17 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
                 {transaction.description}
               </Typography>
               <Spacer size="xs" />
-              <Typography
-                variant="caption"
-                color={categoryMeta.color}
-                weight="semibold"
-                numberOfLines={1}
-              >
-                {categoryMeta.label}
-              </Typography>
-              <Spacer size="xs" />
-              <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
-                {dateStr}
-              </Typography>
+              <View style={styles.categoryRow}>
+                <View style={[styles.categoryDot, { backgroundColor: categoryMeta.color }]} />
+                <Typography
+                  variant="caption"
+                  color={categoryMeta.color}
+                  weight="semibold"
+                  numberOfLines={1}
+                >
+                  {categoryMeta.label}
+                </Typography>
+              </View>
               {pendingLabel && (
                 <>
                   <Spacer size="xs" />
@@ -198,9 +212,7 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
             >
               {amountPrefix}{formattedAmount}
             </Typography>
-            <Typography variant="caption" color={theme.colors.secondaryText} align="right">
-              {transactionKindLabel}
-            </Typography>
+            <MaterialIcons name="chevron-right" size={18} color={theme.colors.tertiaryText} />
           </View>
         </TouchableOpacity>
       </Swipeable>
@@ -224,21 +236,18 @@ export function TransactionItem({ transaction, onDeleted }: Props) {
 const styles = StyleSheet.create({
   swipeableContainer: {
     backgroundColor: theme.colors.expense,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.sm,
+    marginBottom: 0,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 84,
+    minHeight: 82,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 0,
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.borderLight,
-    ...theme.shadows.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
   },
   leftContent: {
     flex: 1,
@@ -248,12 +257,30 @@ const styles = StyleSheet.create({
     paddingRight: theme.spacing.md,
   },
   iconFrame: {
-    borderRadius: theme.borderRadius.md,
-    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   textContent: {
     flex: 1,
     minWidth: 0,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  kindMeta: {
+    justifyContent: 'center',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  categoryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   pendingBadge: {
     alignSelf: 'flex-start',
@@ -263,7 +290,7 @@ const styles = StyleSheet.create({
     minWidth: 92,
     maxWidth: 116,
     alignItems: 'flex-end',
-    gap: theme.spacing.xs,
+    gap: 2,
   },
   amount: {
     width: '100%',
@@ -274,7 +301,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     width: 100,
     paddingLeft: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
   },
   deleteAction: {
     backgroundColor: theme.colors.expense,
@@ -282,6 +308,5 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     width: 100,
     paddingRight: theme.spacing.xl,
-    borderRadius: theme.borderRadius.md,
-  }
+  },
 });

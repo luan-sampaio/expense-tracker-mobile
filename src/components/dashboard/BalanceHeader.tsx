@@ -1,3 +1,4 @@
+import { Typography } from '@/src/components/ui/Typography';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency, formatMonthLabel } from '@/src/utils/formatters';
@@ -5,8 +6,64 @@ import { getDashboardMetrics } from '@/src/utils/transactionMetrics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Spacer } from '@/src/components/ui/Spacer';
-import { Typography } from '@/src/components/ui/Typography';
+
+function MetricTile({
+  label,
+  value,
+  iconName,
+  color,
+}: {
+  label: string;
+  value: string;
+  iconName: React.ComponentProps<typeof MaterialIcons>['name'];
+  color: string;
+}) {
+  return (
+    <View style={styles.metricTile}>
+      <View style={styles.metricLead}>
+        <View style={styles.metricIcon}>
+          <MaterialIcons name={iconName} size={18} color={color} />
+        </View>
+        <Typography variant="caption" color={theme.colors.secondaryText}>
+          {label}
+        </Typography>
+      </View>
+      <Typography variant="body" weight="bold" color={color} numberOfLines={1} style={styles.metricValue}>
+        {value}
+      </Typography>
+    </View>
+  );
+}
+
+function InsightCard({
+  label,
+  value,
+  iconName,
+  iconColor,
+  iconBackgroundColor,
+}: {
+  label: string;
+  value: string;
+  iconName: React.ComponentProps<typeof MaterialIcons>['name'];
+  iconColor: string;
+  iconBackgroundColor: string;
+}) {
+  return (
+    <View style={styles.insightCard}>
+      <View style={[styles.insightIcon, { backgroundColor: iconBackgroundColor }]}>
+        <MaterialIcons name={iconName} size={18} color={iconColor} />
+      </View>
+      <View style={styles.insightText}>
+        <Typography variant="caption" color={theme.colors.secondaryText}>
+          {label}
+        </Typography>
+        <Typography variant="body" weight="semibold" numberOfLines={2}>
+          {value}
+        </Typography>
+      </View>
+    </View>
+  );
+}
 
 export function BalanceHeader() {
   const transactions = useExpenseStore((state) => state.transactions);
@@ -24,109 +81,88 @@ export function BalanceHeader() {
       ? theme.colors.income
       : theme.colors.info;
   const comparisonIcon = metrics.expenseComparison.direction === 'up'
-    ? 'arrow-upward'
+    ? 'north-east'
     : metrics.expenseComparison.direction === 'down'
-      ? 'arrow-downward'
-      : 'remove';
+      ? 'south-east'
+      : 'east';
+  const balanceColor = metrics.balance >= 0 ? theme.colors.primaryText : theme.colors.expense;
+  const monthDescription = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 
   return (
     <View style={styles.container}>
-      <View style={styles.card}>
-        <View style={styles.balanceBlock}>
-          <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
+      <View style={styles.heroCard}>
+        <View style={styles.heroTopRow}>
+          <View style={styles.monthMeta}>
+            <MaterialIcons name="calendar-month" size={16} color={theme.colors.primary} />
+            <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+              {monthDescription}
+            </Typography>
+          </View>
+
+          <View style={styles.comparisonMeta}>
+            <MaterialIcons name={comparisonIcon} size={16} color={comparisonColor} />
+            <Typography variant="caption" weight="semibold" color={comparisonColor} numberOfLines={1}>
+              {metrics.expenseComparison.label}
+            </Typography>
+          </View>
+        </View>
+
+        <View style={styles.heroContent}>
+          <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+            Panorama financeiro
+          </Typography>
+          <Typography variant="body" weight="semibold" color={theme.colors.secondaryText}>
             Saldo do mês
           </Typography>
-          <Typography
-            variant="hero"
-            weight="bold"
-            color={metrics.balance >= 0 ? theme.colors.primaryText : theme.colors.expense}
-            align="center"
-            numberOfLines={1}
-            style={styles.balanceAmount}
-          >
+          <Typography variant="hero" weight="bold" color={balanceColor} style={styles.balanceAmount}>
             {formatCurrency(metrics.balance)}
           </Typography>
-          <Typography variant="caption" color={theme.colors.secondaryText}>
-            {monthLabel}
+          <Typography variant="body" color={theme.colors.secondaryText}>
+            Um retrato rápido do saldo, entradas e saídas do mês atual.
           </Typography>
         </View>
-        <Spacer size="lg" />
-        <View style={styles.metricsRow}>
-          <View style={[styles.miniCard, styles.incomeCard]}>
-            <View style={[styles.metricIcon, { backgroundColor: theme.colors.incomeBackground }]}>
-              <MaterialIcons name="arrow-upward" size={18} color={theme.colors.income} />
-            </View>
-            <View>
-              <Typography variant="caption" color={theme.colors.secondaryText}>Receitas</Typography>
-              <Typography variant="body" weight="bold" color={theme.colors.income} numberOfLines={1}>
-                {formatCurrency(metrics.income)}
-              </Typography>
-            </View>
-          </View>
-          <View style={[styles.miniCard, styles.expenseCard]}>
-            <View style={[styles.metricIcon, { backgroundColor: theme.colors.expenseBackground }]}>
-              <MaterialIcons name="arrow-downward" size={18} color={theme.colors.expense} />
-            </View>
-            <View>
-              <Typography variant="caption" color={theme.colors.secondaryText}>Despesas</Typography>
-              <Typography variant="body" weight="bold" color={theme.colors.expense} numberOfLines={1}>
-                {formatCurrency(metrics.expenses)}
-              </Typography>
-            </View>
-          </View>
-          <View style={[styles.miniCard, styles.contributionCard]}>
-            <View style={[styles.metricIcon, { backgroundColor: theme.colors.primaryBackground }]}>
-              <MaterialIcons name="savings" size={18} color={theme.colors.primary} />
-            </View>
-            <View>
-              <Typography variant="caption" color={theme.colors.secondaryText}>Aportes</Typography>
-              <Typography variant="body" weight="bold" color={theme.colors.primary} numberOfLines={1}>
-                {formatCurrency(metrics.contributions)}
-              </Typography>
-            </View>
-          </View>
-        </View>
-        <Spacer size="lg" />
-        <View style={styles.insightsGrid}>
-          <View style={styles.insight}>
-            <View style={[styles.insightIcon, { backgroundColor: theme.colors.expenseBackground }]}>
-              <MaterialIcons name="payments" size={18} color={theme.colors.expense} />
-            </View>
-            <View style={styles.insightText}>
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                Maior gasto
-              </Typography>
-              <Typography variant="body" weight="semibold" numberOfLines={2}>
-                {topExpenseLabel}
-              </Typography>
-            </View>
-          </View>
-          <View style={styles.insight}>
-            <View style={[styles.insightIcon, { backgroundColor: theme.colors.primaryBackground }]}>
-              <MaterialIcons name="category" size={18} color={theme.colors.primary} />
-            </View>
-            <View style={styles.insightText}>
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                Categoria destaque
-              </Typography>
-              <Typography variant="body" weight="semibold" numberOfLines={2}>
-                {topCategoryLabel}
-              </Typography>
-            </View>
-          </View>
-          <View style={styles.insight}>
-            <View style={[styles.insightIcon, { backgroundColor: theme.colors.infoBackground }]}>
-              <MaterialIcons name={comparisonIcon} size={18} color={comparisonColor} />
-            </View>
-            <View style={styles.insightText}>
-              <Typography variant="caption" color={theme.colors.secondaryText}>
-                Comparação mensal
-              </Typography>
-              <Typography variant="body" weight="semibold" color={comparisonColor} numberOfLines={2}>
-                {metrics.expenseComparison.label}
-              </Typography>
-            </View>
-          </View>
+      </View>
+
+      <View style={styles.metricsGrid}>
+        <MetricTile
+          label="Receitas"
+          value={formatCurrency(metrics.income)}
+          iconName="arrow-upward"
+          color={theme.colors.income}
+        />
+        <MetricTile
+          label="Despesas"
+          value={formatCurrency(metrics.expenses)}
+          iconName="arrow-downward"
+          color={theme.colors.expense}
+        />
+        <MetricTile
+          label="Aportes"
+          value={formatCurrency(metrics.contributions)}
+          iconName="savings"
+          color={theme.colors.primary}
+        />
+      </View>
+
+      <View style={styles.insightsSection}>
+        <Typography variant="caption" weight="semibold" color={theme.colors.tertiaryText}>
+          Leituras rápidas
+        </Typography>
+        <View style={styles.insightList}>
+          <InsightCard
+            label="Maior gasto"
+            value={topExpenseLabel}
+            iconName="payments"
+            iconColor={theme.colors.expense}
+            iconBackgroundColor={theme.colors.expenseBackground}
+          />
+          <InsightCard
+            label="Categoria destaque"
+            value={topCategoryLabel}
+            iconName="category"
+            iconColor={theme.colors.primary}
+            iconBackgroundColor={theme.colors.primaryBackground}
+          />
         </View>
       </View>
     </View>
@@ -135,71 +171,82 @@ export function BalanceHeader() {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.lg,
     width: '100%',
+    gap: theme.spacing.md,
   },
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.borderRadius.lg,
+  heroCard: {
+    borderRadius: theme.borderRadius.xl,
     padding: theme.spacing.lg,
-    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceElevated,
+    borderWidth: 1,
+    borderColor: theme.colors.borderLight,
+    gap: theme.spacing.lg,
     ...theme.shadows.md,
   },
-  balanceBlock: {
-    width: '100%',
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: theme.spacing.sm,
+  },
+  monthMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
   },
-  balanceAmount: {
-    width: '100%',
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    width: '100%',
-    gap: theme.spacing.sm,
-  },
-  miniCard: {
-    flex: 1,
-    minWidth: 128,
+  comparisonMeta: {
+    maxWidth: '58%',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+    gap: theme.spacing.xs,
+  },
+  heroContent: {
+    gap: theme.spacing.xs,
+  },
+  balanceAmount: {
+    lineHeight: 48,
+  },
+  metricsGrid: {
     gap: theme.spacing.sm,
   },
-  incomeCard: {
-    backgroundColor: theme.colors.incomeBackground,
+  metricLead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
-  expenseCard: {
-    backgroundColor: theme.colors.expenseBackground,
-  },
-  contributionCard: {
-    backgroundColor: theme.colors.primaryBackground,
+  metricTile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.borderLight,
   },
   metricIcon: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: theme.borderRadius.sm,
+    width: 20,
   },
-  insightsGrid: {
-    width: '100%',
+  metricValue: {
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  insightsSection: {
     gap: theme.spacing.sm,
   },
-  insight: {
+  insightList: {
+    gap: theme.spacing.sm,
+  },
+  insightCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.borderLight,
-    paddingTop: theme.spacing.md,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    backgroundColor: theme.colors.surface,
   },
   insightIcon: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: theme.borderRadius.md,

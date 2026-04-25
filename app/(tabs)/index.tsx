@@ -3,7 +3,6 @@ import { BudgetRuleWidget } from '@/src/components/dashboard/BudgetRuleWidget';
 import { FinancialGoalsWidget } from '@/src/components/dashboard/FinancialGoalsWidget';
 import { TransactionItem } from '@/src/components/dashboard/TransactionItem';
 import { AppDialog } from '@/src/components/ui/AppDialog';
-import { Badge } from '@/src/components/ui/Badge';
 import { Button } from '@/src/components/ui/Button';
 import { Chip } from '@/src/components/ui/Chip';
 import { Container } from '@/src/components/ui/Container';
@@ -29,6 +28,7 @@ import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { FlatList, ListRenderItem, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 type TypeFilter = TransactionTypeFilter;
@@ -92,7 +92,25 @@ function TransactionSkeletonList() {
   );
 }
 
+function getGreetingByHour(date: Date) {
+  const hour = date.getHours();
+
+  if (hour < 12) return 'Bom dia';
+  if (hour < 18) return 'Boa tarde';
+
+  return 'Boa noite';
+}
+
+function formatLongDate(date: Date) {
+  return date.toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+}
+
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('all');
   const [selectedDateScope, setSelectedDateScope] = useState<DateScopeFilter>('all');
   const [selectedType, setSelectedType] = useState<TypeFilter>('all');
@@ -162,6 +180,19 @@ export default function HomeScreen() {
     searchQuery.trim().length > 0,
   ].filter(Boolean).length;
   const hasActiveFilters = activeFilterCount > 0;
+  const today = useMemo(() => new Date(), []);
+  const currentMonthLabel = useMemo(() => formatMonthLabel(today), [today]);
+  const greeting = useMemo(() => getGreetingByHour(today), [today]);
+  const todayLabel = useMemo(() => formatLongDate(today), [today]);
+  const editorialStatusLabel = shouldShowPendingSyncBanner
+    ? pendingCount === 1
+      ? '1 ajuste aguardando envio'
+      : `${pendingCount} ajustes aguardando envio`
+    : hasActiveFilters
+      ? activeFilterCount === 1
+        ? '1 filtro ativo'
+        : `${activeFilterCount} filtros ativos`
+      : 'Tudo em ordem';
 
   const clearFilters = () => {
     impactFeedback();
@@ -198,7 +229,37 @@ export default function HomeScreen() {
 
   const listHeader = (
     <>
-      <Spacer size="xl" />
+      <View style={[styles.topIntro, { paddingTop: insets.top + theme.spacing.sm }]}>
+        <View style={styles.editorialHeader}>
+          <View style={styles.editorialCopy}>
+            <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+              {greeting}
+            </Typography>
+            <Typography variant="heading" weight="bold">
+              Seu dinheiro em movimento
+            </Typography>
+            <Typography
+              variant="body"
+              color={theme.colors.secondaryText}
+              style={styles.editorialDate}
+            >
+              {todayLabel} · panorama de {currentMonthLabel}
+            </Typography>
+          </View>
+
+          <View style={styles.editorialAside}>
+            <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+              {editorialStatusLabel}
+            </Typography>
+            <View style={styles.editorialNote}>
+              <MaterialIcons name="timeline" size={16} color={theme.colors.tertiaryText} />
+              <Typography variant="caption" color={theme.colors.secondaryText}>
+                Receitas, despesas e metas em um só painel
+              </Typography>
+            </View>
+          </View>
+        </View>
+      </View>
 
       {error && (
         <View style={styles.section}>
@@ -318,9 +379,6 @@ export default function HomeScreen() {
                 size={20}
                 color={(isFiltersExpanded || activeFilterCount > 0) ? theme.colors.primary : theme.colors.secondaryText}
               />
-              {activeFilterCount > 0 && (
-                <Badge label={activeFilterCount} variant="primary" size="sm" style={styles.filterCountBadge} />
-              )}
             </TouchableOpacity>
           </View>
 
@@ -464,7 +522,10 @@ export default function HomeScreen() {
         renderItem={renderTransaction}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={listEmpty}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: theme.spacing.xxl + insets.bottom + theme.spacing.lg },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       />
@@ -482,21 +543,48 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   listContent: {
-    paddingBottom: theme.spacing.xxl,
+    flexGrow: 1,
+  },
+  topIntro: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+  },
+  editorialHeader: {
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surfaceElevated,
+    gap: theme.spacing.lg,
+    ...theme.shadows.sm,
+  },
+  editorialCopy: {
+    gap: theme.spacing.xs,
+  },
+  editorialDate: {
+    textTransform: 'capitalize',
+  },
+  editorialAside: {
+    gap: theme.spacing.sm,
+  },
+  editorialNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
   },
   section: {
     paddingHorizontal: theme.spacing.lg,
   },
   transactionsBand: {
-    marginTop: theme.spacing.xl,
-    paddingTop: theme.spacing.lg,
+    marginTop: theme.spacing.xxl,
+    paddingTop: theme.spacing.xl,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
     backgroundColor: theme.colors.surface,
     borderTopWidth: 1,
     borderTopColor: theme.colors.borderLight,
   },
   filterToolbar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: theme.spacing.sm,
   },
   searchGroup: {
@@ -509,11 +597,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.sm,
-    paddingLeft: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: theme.colors.borderLight,
-    backgroundColor: theme.colors.surfaceSecondary,
+    backgroundColor: theme.colors.surface,
   },
   searchInput: {
     minHeight: theme.touchTarget.min,
@@ -527,34 +615,24 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   filterToggle: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surfaceSecondary,
+    borderColor: theme.colors.borderLight,
+    backgroundColor: theme.colors.surface,
   },
   filterToggleActive: {
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.primaryBackground,
-  },
-  filterCountBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    minWidth: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.border,
   },
   advancedFilters: {
     marginTop: theme.spacing.md,
     gap: theme.spacing.sm,
+    paddingTop: theme.spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.borderLight,
   },
   filterGroup: {
     flexDirection: 'row',
@@ -562,15 +640,13 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
   },
   filterGroupStack: {
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
   },
   dateScopeFilterContent: {
     gap: theme.spacing.sm,
-    paddingRight: theme.spacing.lg,
   },
   categoryFilterContent: {
     gap: theme.spacing.sm,
-    paddingRight: theme.spacing.lg,
   },
   skeletonList: {
     gap: theme.spacing.sm,

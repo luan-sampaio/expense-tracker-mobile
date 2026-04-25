@@ -5,11 +5,21 @@ export function getUserFacingError(error: unknown) {
     return FALLBACK_ERROR_MESSAGE;
   }
 
-  if (error.message.includes('Network request failed')) {
+  if (error.message.includes('EXPO_PUBLIC_API_URL inválida')) {
+    return 'A URL da API está inválida. Revise o arquivo .env e reinicie o Expo.';
+  }
+
+  if (
+    error.message.includes('Não foi possível conectar em') ||
+    error.message.includes('Network request failed')
+  ) {
     return 'Sem conexão com o servidor. Verifique a rede e tente novamente.';
   }
 
-  if (error.message.includes('Request timeout')) {
+  if (
+    error.message.includes('Tempo esgotado ao acessar') ||
+    error.message.includes('Request timeout')
+  ) {
     return 'O servidor demorou para responder. Tente novamente em instantes.';
   }
 
@@ -31,4 +41,3 @@ export function getUserFacingError(error: unknown) {
 
   return error.message || FALLBACK_ERROR_MESSAGE;
 }
-

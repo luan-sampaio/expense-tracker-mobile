@@ -2,6 +2,23 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const TIMEOUT_MS = 8000;
+const DEFAULT_API_PORT = '8001';
+
+class ApiRequestError extends Error {
+  code: 'api_config' | 'network' | 'timeout' | 'http';
+  url?: string;
+
+  constructor(
+    code: 'api_config' | 'network' | 'timeout' | 'http',
+    message: string,
+    options?: { url?: string }
+  ) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.code = code;
+    this.url = options?.url;
+  }
+}
 
 function getDevServerHost() {
   const hostUri =
@@ -16,32 +33,49 @@ function getDevServerHost() {
   return hostUri.split(':')[0] ?? null;
 }
 
+function normalizeBaseUrl(value: string) {
+  const trimmedValue = value.trim().replace(/\/$/, '');
+
+  try {
+    const parsedUrl = new URL(trimmedValue);
+
+    return parsedUrl.toString().replace(/\/$/, '');
+  } catch {
+    throw new ApiRequestError(
+      'api_config',
+      `EXPO_PUBLIC_API_URL inválida: ${trimmedValue}. Exemplo esperado: http://192.168.x.x:${DEFAULT_API_PORT}/api`
+    );
+  }
+}
+
 function resolveBaseUrl() {
   const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
 
   if (configuredUrl) {
+    const normalizedConfiguredUrl = normalizeBaseUrl(configuredUrl);
+
     if (Platform.OS === 'android' && configuredUrl.includes('localhost')) {
-      return configuredUrl.replace('localhost', '10.0.2.2').replace(/\/$/, '');
+      return normalizedConfiguredUrl.replace('localhost', '10.0.2.2');
     }
 
-    return configuredUrl.replace(/\/$/, '');
+    return normalizedConfiguredUrl;
   }
 
   if (Platform.OS === 'web') {
-    return 'http://localhost:8000/api';
+    return `http://localhost:${DEFAULT_API_PORT}/api`;
   }
 
   const devServerHost = getDevServerHost();
 
   if (devServerHost) {
-    return `http://${devServerHost}:8000/api`;
+    return `http://${devServerHost}:${DEFAULT_API_PORT}/api`;
   }
 
   if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000/api';
+    return `http://10.0.2.2:${DEFAULT_API_PORT}/api`;
   }
 
-  return 'http://localhost:8000/api';
+  return `http://localhost:${DEFAULT_API_PORT}/api`;
 }
 
 const BASE_URL = resolveBaseUrl();
@@ -59,7 +93,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     });
 
     if (!response.ok) {
-      throw new Error(`API error ${response.status}: ${response.statusText}`);
+      throw new ApiRequestError(
+        'http',
+        `API error ${response.status}: ${response.statusText || 'Unexpected response'}`,
+        { url }
+      );
     }
 
     if (response.status === 204) {
@@ -73,13 +111,23 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
     return response.json() as Promise<T>;
   } catch (error) {
+    if (error instanceof ApiRequestError) {
+      throw error;
+    }
+
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${TIMEOUT_MS}ms for ${url}`);
+      throw new ApiRequestError(
+        'timeout',
+        `Tempo esgotado ao acessar ${url}. Confira se o backend está ativo.`,
+        { url }
+      );
     }
 
     if (error instanceof TypeError) {
-      throw new Error(
-        `Network request failed for ${url}. Check EXPO_PUBLIC_API_URL, backend availability, and whether your device can reach the host machine.`
+      throw new ApiRequestError(
+        'network',
+        `Não foi possível conectar em ${url}. Verifique o EXPO_PUBLIC_API_URL, o backend e a rede do dispositivo.`,
+        { url }
       );
     }
 
@@ -97,3 +145,5 @@ export const api = {
     request<T>(path, { method: 'PUT', body: JSON.stringify(body) }),
   delete: (path: string) => request<void>(path, { method: 'DELETE' }),
 };
+
+export { ApiRequestError, BASE_URL };

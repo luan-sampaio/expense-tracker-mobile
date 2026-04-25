@@ -124,9 +124,9 @@ Crie um arquivo `.env` na raiz do projeto:
 
 ```env
 # URL base do backend Django Ninja
-# Em emulador Android: http://10.0.2.2:8000/api
-# Em celular físico: http://SEU_IP_LOCAL:8000/api
-EXPO_PUBLIC_API_URL=http://192.168.x.x:8000/api
+# Em emulador Android: http://10.0.2.2:8001/api
+# Em celular físico: http://SEU_IP_LOCAL:8001/api
+EXPO_PUBLIC_API_URL=http://192.168.x.x:8001/api
 ```
 
 > Para descobrir seu IP local: `ip addr show | grep "inet " | grep -v 127`
@@ -151,7 +151,7 @@ Para rodar o backend, consulte o repositório: [expense-tracker-api](https://git
 
 ```bash
 # Com o backend rodando, a documentação interativa fica disponível em:
-http://localhost:8000/api/docs
+http://localhost:8001/api/docs
 ```
 
 ---

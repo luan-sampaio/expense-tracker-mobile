@@ -1,6 +1,5 @@
 import { impactFeedback } from '@/src/utils/haptics';
 import { theme } from '@/src/styles/theme';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity, TouchableOpacityProps } from 'react-native';
 import { Typography } from '@/src/components/ui/Typography';
@@ -92,12 +91,9 @@ export function Chip({
       accessibilityLabel={rest.accessibilityLabel ?? `${label}${selected ? ', selecionado' : ''}`}
       {...rest}
     >
-      {selected && (
-        <MaterialIcons name="check" size={16} color={disabled ? theme.colors.tertiaryText : textColor} />
-      )}
       <Typography
         variant={size === 'sm' ? 'caption' : 'body'}
-        weight={selected ? 'semibold' : 'regular'}
+        weight={selected ? 'medium' : 'regular'}
         color={disabled ? theme.colors.tertiaryText : textColor}
       >
         {label}
@@ -112,7 +108,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: theme.spacing.xs,
     paddingHorizontal: theme.spacing.md,
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
@@ -121,9 +116,7 @@ const styles = StyleSheet.create({
     minHeight: theme.touchTarget.min,
     paddingHorizontal: theme.spacing.sm,
   },
-  selected: {
-    borderWidth: 2,
-  },
+  selected: {},
   disabled: {
     opacity: 0.55,
   },
