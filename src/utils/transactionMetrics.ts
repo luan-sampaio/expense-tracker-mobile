@@ -7,6 +7,7 @@ import {
   sumTransactionsByType,
 } from '@/src/domain/transactions';
 import { Transaction } from '@/src/types';
+import { formatCurrency } from '@/src/utils/formatters';
 
 export type ExpenseComparisonDirection = 'up' | 'down' | 'neutral';
 
@@ -15,6 +16,15 @@ export type ExpenseComparison = {
   direction: ExpenseComparisonDirection;
   label: string;
   percentage: number | null;
+};
+
+export type FinancialInsightTone = 'expense' | 'income' | 'primary' | 'info';
+
+export type FinancialSummaryInsight = {
+  id: 'top-expense' | 'monthly-change' | 'top-category' | 'daily-average';
+  title: string;
+  message: string;
+  tone: FinancialInsightTone;
 };
 
 type TopExpenseCategory = {
@@ -41,6 +51,7 @@ export type MonthlyInsights = {
   currentMonth: MonthlyMetrics;
   expenseComparison: ExpenseComparison;
   previousMonth: MonthlyMetrics;
+  summaryInsights: FinancialSummaryInsight[];
 };
 
 export function getMonthStart(date: Date) {
@@ -180,17 +191,143 @@ export function getExpenseComparison(
   };
 }
 
+function getTopExpenseInsight(currentMonth: MonthlyMetrics): FinancialSummaryInsight {
+  if (!currentMonth.topExpense) {
+    return {
+      id: 'top-expense',
+      title: 'Maior gasto',
+      message: 'Nenhuma despesa comum registrada neste mês.',
+      tone: 'info',
+    };
+  }
+
+  const fallbackLabel = getCategoryMeta(currentMonth.topExpense.category).label;
+  const expenseLabel = currentMonth.topExpense.description.trim() || fallbackLabel;
+
+  return {
+    id: 'top-expense',
+    title: 'Maior gasto',
+    message: `${expenseLabel} puxou o topo com ${formatCurrency(currentMonth.topExpense.amount)}.`,
+    tone: 'expense',
+  };
+}
+
+function getMonthlyChangeInsight(
+  currentMonth: MonthlyMetrics,
+  expenseComparison: ExpenseComparison
+): FinancialSummaryInsight {
+  if (currentMonth.expenses === 0 && expenseComparison.difference === 0) {
+    return {
+      id: 'monthly-change',
+      title: 'Variação mensal',
+      message: 'Sem despesas comuns nos dois meses comparados.',
+      tone: 'info',
+    };
+  }
+
+  if (currentMonth.expenses === 0) {
+    return {
+      id: 'monthly-change',
+      title: 'Variação mensal',
+      message: `As despesas caíram para zero depois de ${formatCurrency(Math.abs(expenseComparison.difference))} no mês anterior.`,
+      tone: 'income',
+    };
+  }
+
+  if (expenseComparison.percentage === null) {
+    return {
+      id: 'monthly-change',
+      title: 'Variação mensal',
+      message: `As despesas somaram ${formatCurrency(currentMonth.expenses)} após um mês anterior sem gastos.`,
+      tone: 'info',
+    };
+  }
+
+  if (expenseComparison.difference === 0) {
+    return {
+      id: 'monthly-change',
+      title: 'Variação mensal',
+      message: `Você repetiu ${formatCurrency(currentMonth.expenses)} em despesas, no mesmo nível do mês anterior.`,
+      tone: 'info',
+    };
+  }
+
+  const differenceLabel = formatCurrency(Math.abs(expenseComparison.difference));
+  const percentageLabel = `${expenseComparison.percentage.toFixed(0)}%`;
+
+  return {
+    id: 'monthly-change',
+    title: 'Variação mensal',
+    message: expenseComparison.difference > 0
+      ? `As despesas subiram ${percentageLabel} (${differenceLabel} a mais) contra o mês anterior.`
+      : `As despesas caíram ${percentageLabel} (${differenceLabel} a menos) contra o mês anterior.`,
+    tone: expenseComparison.difference > 0 ? 'expense' : 'income',
+  };
+}
+
+function getTopCategoryInsight(currentMonth: MonthlyMetrics): FinancialSummaryInsight {
+  if (!currentMonth.topExpenseCategory || currentMonth.expenses === 0) {
+    return {
+      id: 'top-category',
+      title: 'Categoria dominante',
+      message: 'Nenhuma categoria dominante por enquanto.',
+      tone: 'info',
+    };
+  }
+
+  const share = (currentMonth.topExpenseCategory.amount / currentMonth.expenses) * 100;
+
+  return {
+    id: 'top-category',
+    title: 'Categoria dominante',
+    message: `${currentMonth.topExpenseCategory.category.label} concentrou ${share.toFixed(0)}% das despesas (${formatCurrency(currentMonth.topExpenseCategory.amount)}).`,
+    tone: 'primary',
+  };
+}
+
+function getDailyAverageInsight(currentMonth: MonthlyMetrics): FinancialSummaryInsight {
+  if (currentMonth.expenses === 0) {
+    return {
+      id: 'daily-average',
+      title: 'Ritmo diário',
+      message: 'Sem despesas comuns para calcular a média diária neste mês.',
+      tone: 'info',
+    };
+  }
+
+  return {
+    id: 'daily-average',
+    title: 'Ritmo diário',
+    message: `A média diária de despesas ficou em ${formatCurrency(currentMonth.dailyAverage)}.`,
+    tone: 'info',
+  };
+}
+
+export function getSummaryInsights(
+  currentMonth: MonthlyMetrics,
+  expenseComparison: ExpenseComparison
+): FinancialSummaryInsight[] {
+  return [
+    getTopExpenseInsight(currentMonth),
+    getMonthlyChangeInsight(currentMonth, expenseComparison),
+    getTopCategoryInsight(currentMonth),
+    getDailyAverageInsight(currentMonth),
+  ];
+}
+
 export function getMonthlyInsights(
   transactions: Transaction[],
   reference = new Date()
 ): MonthlyInsights {
   const currentMonth = summarizeMonth(transactions, reference);
   const previousMonth = summarizeMonth(transactions, getPreviousMonth(reference));
+  const expenseComparison = getExpenseComparison(currentMonth.expenses, previousMonth.expenses);
 
   return {
     currentMonth,
-    expenseComparison: getExpenseComparison(currentMonth.expenses, previousMonth.expenses),
+    expenseComparison,
     previousMonth,
+    summaryInsights: getSummaryInsights(currentMonth, expenseComparison),
   };
 }
 

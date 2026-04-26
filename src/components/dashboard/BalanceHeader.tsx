@@ -70,12 +70,6 @@ export function BalanceHeader() {
   const insights = useMemo(() => getMonthlyInsights(transactions), [transactions]);
   const metrics = insights.currentMonth;
   const monthLabel = useMemo(() => formatMonthLabel(new Date()), []);
-  const topExpenseLabel = metrics.topExpense
-    ? `${metrics.topExpense.description} · ${formatCurrency(metrics.topExpense.amount)}`
-    : 'Nenhuma despesa no mês';
-  const topCategoryLabel = metrics.topExpenseCategory
-    ? `${metrics.topExpenseCategory.category.label} · ${formatCurrency(metrics.topExpenseCategory.amount)}`
-    : 'Nenhuma categoria ainda';
   const comparisonColor = insights.expenseComparison.direction === 'up'
     ? theme.colors.expense
     : insights.expenseComparison.direction === 'down'
@@ -88,6 +82,7 @@ export function BalanceHeader() {
       : 'east';
   const balanceColor = metrics.balance >= 0 ? theme.colors.primaryText : theme.colors.expense;
   const monthDescription = monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
+  const summaryInsights = insights.summaryInsights;
 
   return (
     <View style={styles.container}>
@@ -150,20 +145,40 @@ export function BalanceHeader() {
           Leituras rápidas
         </Typography>
         <View style={styles.insightList}>
-          <InsightCard
-            label="Maior gasto"
-            value={topExpenseLabel}
-            iconName="payments"
-            iconColor={theme.colors.expense}
-            iconBackgroundColor={theme.colors.expenseBackground}
-          />
-          <InsightCard
-            label="Categoria destaque"
-            value={topCategoryLabel}
-            iconName="category"
-            iconColor={theme.colors.primary}
-            iconBackgroundColor={theme.colors.primaryBackground}
-          />
+          {summaryInsights.map((insight) => {
+            const iconName = insight.id === 'top-expense'
+              ? 'payments'
+              : insight.id === 'monthly-change'
+                ? 'compare-arrows'
+                : insight.id === 'top-category'
+                  ? 'category'
+                  : 'calendar-today';
+            const iconColor = insight.tone === 'expense'
+              ? theme.colors.expense
+              : insight.tone === 'income'
+                ? theme.colors.income
+                : insight.tone === 'primary'
+                  ? theme.colors.primary
+                  : theme.colors.info;
+            const iconBackgroundColor = insight.tone === 'expense'
+              ? theme.colors.expenseBackground
+              : insight.tone === 'income'
+                ? theme.colors.incomeBackground
+                : insight.tone === 'primary'
+                  ? theme.colors.primaryBackground
+                  : theme.colors.infoBackground;
+
+            return (
+              <InsightCard
+                key={insight.id}
+                label={insight.title}
+                value={insight.message}
+                iconName={iconName}
+                iconColor={iconColor}
+                iconBackgroundColor={iconBackgroundColor}
+              />
+            );
+          })}
         </View>
       </View>
     </View>
