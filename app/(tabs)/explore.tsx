@@ -5,16 +5,14 @@ import { SectionHeader } from '@/src/components/ui/SectionHeader';
 import { Spacer } from '@/src/components/ui/Spacer';
 import { Typography } from '@/src/components/ui/Typography';
 import { getCategoryMeta } from '@/src/constants/categories';
-import {
-  groupExpensesByCategory,
-  isSpendingExpense,
-  sortTransactionsByDate,
-} from '@/src/domain/transactions';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
-import { Transaction } from '@/src/types';
 import { formatCurrency, formatMonthLabel } from '@/src/utils/formatters';
-import { getDashboardMetrics } from '@/src/utils/transactionMetrics';
+import {
+  addMonths,
+  getMonthStart,
+  getMonthlyInsights,
+} from '@/src/utils/transactionMetrics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -38,46 +36,6 @@ const DEFAULT_SUMMARY_VISIBILITY: SummarySectionVisibility = {
   categorySpending: true,
   topExpenses: true,
 };
-
-function getMonthStart(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function addMonths(date: Date, amount: number) {
-  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-function isSameMonth(date: string, reference: Date) {
-  const transactionDate = new Date(date);
-
-  return (
-    transactionDate.getMonth() === reference.getMonth() &&
-    transactionDate.getFullYear() === reference.getFullYear()
-  );
-}
-
-function getDaysForAverage(reference: Date) {
-  const today = new Date();
-  const selectedMonth = getMonthStart(reference);
-  const currentMonth = getMonthStart(today);
-
-  if (selectedMonth.getTime() === currentMonth.getTime()) {
-    return today.getDate();
-  }
-
-  return new Date(reference.getFullYear(), reference.getMonth() + 1, 0).getDate();
-}
-
-function getMonthTransactions(transactions: Transaction[], reference: Date) {
-  return transactions.filter((transaction) => isSameMonth(transaction.date, reference));
-}
-
-function getTopExpenses(transactions: Transaction[]) {
-  return sortTransactionsByDate(transactions)
-    .filter(isSpendingExpense)
-    .sort((a, b) => b.amount - a.amount)
-    .slice(0, 5);
-}
 
 function formatPercentage(value: number) {
   return `${value.toFixed(0)}%`;
@@ -144,20 +102,12 @@ export default function ExploreScreen() {
   const chartWidth = Math.max(width - theme.spacing.lg * 2, 260);
   const chartHeight = isNarrowScreen ? 190 : 220;
 
-  const monthTransactions = useMemo(
-    () => getMonthTransactions(transactions, selectedMonth),
+  const insights = useMemo(
+    () => getMonthlyInsights(transactions, selectedMonth),
     [transactions, selectedMonth]
   );
-
-  const metrics = useMemo(
-    () => getDashboardMetrics(transactions, selectedMonth),
-    [transactions, selectedMonth]
-  );
-
-  const expensesByCategory = useMemo(
-    () => groupExpensesByCategory(monthTransactions),
-    [monthTransactions]
-  );
+  const metrics = insights.currentMonth;
+  const expensesByCategory = metrics.expenseCategoryTotals;
 
   const chartData = useMemo(() => {
     const totalExpenses = Object.values(expensesByCategory).reduce((total, amount) => {
@@ -181,22 +131,17 @@ export default function ExploreScreen() {
       .sort((a, b) => b.population - a.population);
   }, [expensesByCategory]);
 
-  const topExpenses = useMemo(
-    () => getTopExpenses(monthTransactions),
-    [monthTransactions]
-  );
-
-  const dailyAverage = metrics.expenses / getDaysForAverage(selectedMonth);
+  const topExpenses = metrics.topExpenses;
   const monthLabel = formatMonthLabel(selectedMonth);
-  const hasMonthData = monthTransactions.length > 0;
-  const comparisonColor = metrics.expenseComparison.direction === 'up'
+  const hasMonthData = metrics.transactions.length > 0;
+  const comparisonColor = insights.expenseComparison.direction === 'up'
     ? theme.colors.expense
-    : metrics.expenseComparison.direction === 'down'
+    : insights.expenseComparison.direction === 'down'
       ? theme.colors.income
       : theme.colors.info;
-  const comparisonIcon = metrics.expenseComparison.direction === 'up'
+  const comparisonIcon = insights.expenseComparison.direction === 'up'
     ? 'trending-up'
-    : metrics.expenseComparison.direction === 'down'
+    : insights.expenseComparison.direction === 'down'
       ? 'trending-down'
       : 'trending-flat';
   const balanceToneLabel = metrics.balance >= 0 ? 'Saldo respirando' : 'Saldo apertado';
@@ -277,7 +222,7 @@ export default function ExploreScreen() {
             />
             <SummaryGlance
               label="Média diária"
-              value={formatCurrency(dailyAverage)}
+              value={formatCurrency(metrics.dailyAverage)}
               toneColor={theme.colors.info}
               backgroundColor={theme.colors.surface}
             />
@@ -325,7 +270,7 @@ export default function ExploreScreen() {
           <View style={styles.comparisonPill}>
             <MaterialIcons name={comparisonIcon} size={18} color={comparisonColor} />
             <Typography variant="caption" weight="semibold" color={comparisonColor}>
-              {metrics.expenseComparison.label}
+              {insights.expenseComparison.label}
             </Typography>
           </View>
         </View>
@@ -351,7 +296,7 @@ export default function ExploreScreen() {
           />
           <MetricCard
             label="Média diária"
-            value={formatCurrency(dailyAverage)}
+            value={formatCurrency(metrics.dailyAverage)}
             iconName="calendar-today"
             color={theme.colors.info}
           />

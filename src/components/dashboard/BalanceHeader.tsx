@@ -2,7 +2,7 @@ import { Typography } from '@/src/components/ui/Typography';
 import { useExpenseStore } from '@/src/store/useExpenseStore';
 import { theme } from '@/src/styles/theme';
 import { formatCurrency, formatMonthLabel } from '@/src/utils/formatters';
-import { getDashboardMetrics } from '@/src/utils/transactionMetrics';
+import { getMonthlyInsights } from '@/src/utils/transactionMetrics';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -67,7 +67,8 @@ function InsightCard({
 
 export function BalanceHeader() {
   const transactions = useExpenseStore((state) => state.transactions);
-  const metrics = useMemo(() => getDashboardMetrics(transactions), [transactions]);
+  const insights = useMemo(() => getMonthlyInsights(transactions), [transactions]);
+  const metrics = insights.currentMonth;
   const monthLabel = useMemo(() => formatMonthLabel(new Date()), []);
   const topExpenseLabel = metrics.topExpense
     ? `${metrics.topExpense.description} · ${formatCurrency(metrics.topExpense.amount)}`
@@ -75,14 +76,14 @@ export function BalanceHeader() {
   const topCategoryLabel = metrics.topExpenseCategory
     ? `${metrics.topExpenseCategory.category.label} · ${formatCurrency(metrics.topExpenseCategory.amount)}`
     : 'Nenhuma categoria ainda';
-  const comparisonColor = metrics.expenseComparison.direction === 'up'
+  const comparisonColor = insights.expenseComparison.direction === 'up'
     ? theme.colors.expense
-    : metrics.expenseComparison.direction === 'down'
+    : insights.expenseComparison.direction === 'down'
       ? theme.colors.income
       : theme.colors.info;
-  const comparisonIcon = metrics.expenseComparison.direction === 'up'
+  const comparisonIcon = insights.expenseComparison.direction === 'up'
     ? 'north-east'
-    : metrics.expenseComparison.direction === 'down'
+    : insights.expenseComparison.direction === 'down'
       ? 'south-east'
       : 'east';
   const balanceColor = metrics.balance >= 0 ? theme.colors.primaryText : theme.colors.expense;
@@ -102,7 +103,7 @@ export function BalanceHeader() {
           <View style={styles.comparisonMeta}>
             <MaterialIcons name={comparisonIcon} size={16} color={comparisonColor} />
             <Typography variant="caption" weight="semibold" color={comparisonColor} numberOfLines={1}>
-              {metrics.expenseComparison.label}
+              {insights.expenseComparison.label}
             </Typography>
           </View>
         </View>
