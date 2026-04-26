@@ -10,6 +10,8 @@ import { theme } from '@/src/styles/theme';
 import { formatCurrency, formatMonthLabel } from '@/src/utils/formatters';
 import {
   addMonths,
+  FinancialInsightTone,
+  FinancialSummaryInsight,
   getMonthStart,
   getMonthlyInsights,
 } from '@/src/utils/transactionMetrics';
@@ -39,6 +41,110 @@ const DEFAULT_SUMMARY_VISIBILITY: SummarySectionVisibility = {
 
 function formatPercentage(value: number) {
   return `${value.toFixed(0)}%`;
+}
+
+function getInsightIconName(insightId: FinancialSummaryInsight['id']) {
+  if (insightId === 'top-expense') return 'payments';
+  if (insightId === 'monthly-change') return 'compare-arrows';
+  if (insightId === 'top-category') return 'pie-chart';
+
+  return 'calendar-today';
+}
+
+function getToneColors(tone: FinancialInsightTone) {
+  if (tone === 'expense') {
+    return {
+      accent: theme.colors.expense,
+      background: theme.colors.expenseBackground,
+      border: theme.colors.expenseBorder,
+    };
+  }
+
+  if (tone === 'income') {
+    return {
+      accent: theme.colors.income,
+      background: theme.colors.incomeBackground,
+      border: theme.colors.incomeBorder,
+    };
+  }
+
+  if (tone === 'primary') {
+    return {
+      accent: theme.colors.primary,
+      background: theme.colors.primaryBackground,
+      border: theme.colors.border,
+    };
+  }
+
+  return {
+    accent: theme.colors.info,
+    background: theme.colors.infoBackground,
+    border: theme.colors.border,
+  };
+}
+
+function InsightStoryCard({ insight }: { insight: FinancialSummaryInsight }) {
+  const toneColors = getToneColors(insight.tone);
+
+  return (
+    <View
+      style={[
+        styles.insightStoryCard,
+        {
+          backgroundColor: toneColors.background,
+          borderColor: toneColors.border,
+        },
+      ]}
+    >
+      <View style={styles.insightStoryHeader}>
+        <View style={[styles.insightStoryIcon, { backgroundColor: theme.colors.surface }]}>
+          <MaterialIcons
+            name={getInsightIconName(insight.id)}
+            size={18}
+            color={toneColors.accent}
+          />
+        </View>
+        <Typography variant="caption" weight="semibold" color={toneColors.accent}>
+          Insight do periodo
+        </Typography>
+      </View>
+
+      <View style={styles.insightStoryBody}>
+        <Typography variant="body" weight="bold" color={theme.colors.primaryText}>
+          {insight.title}
+        </Typography>
+        <Typography variant="body" color={theme.colors.secondaryText}>
+          {insight.message}
+        </Typography>
+      </View>
+    </View>
+  );
+}
+
+function SectionEmptyMessage({
+  iconName,
+  title,
+  message,
+}: {
+  iconName: React.ComponentProps<typeof MaterialIcons>['name'];
+  title: string;
+  message: string;
+}) {
+  return (
+    <View style={styles.sectionEmptyCard}>
+      <View style={styles.sectionEmptyIcon}>
+        <MaterialIcons name={iconName} size={22} color={theme.colors.primary} />
+      </View>
+      <View style={styles.sectionEmptyText}>
+        <Typography variant="body" weight="semibold" align="center">
+          {title}
+        </Typography>
+        <Typography variant="body" color={theme.colors.secondaryText} align="center">
+          {message}
+        </Typography>
+      </View>
+    </View>
+  );
 }
 
 function MetricCard({
@@ -132,8 +238,10 @@ export default function ExploreScreen() {
   }, [expensesByCategory]);
 
   const topExpenses = metrics.topExpenses;
+  const summaryInsights = insights.summaryInsights;
   const monthLabel = formatMonthLabel(selectedMonth);
   const hasMonthData = metrics.transactions.length > 0;
+  const hasChartData = chartData.length > 0;
   const comparisonColor = insights.expenseComparison.direction === 'up'
     ? theme.colors.expense
     : insights.expenseComparison.direction === 'down'
@@ -146,6 +254,14 @@ export default function ExploreScreen() {
       : 'trending-flat';
   const balanceToneLabel = metrics.balance >= 0 ? 'Saldo respirando' : 'Saldo apertado';
   const balanceToneColor = metrics.balance >= 0 ? theme.colors.primary : theme.colors.expense;
+  const topCategoryShare = metrics.topExpenseCategory && metrics.expenses > 0
+    ? (metrics.topExpenseCategory.amount / metrics.expenses) * 100
+    : 0;
+  const comparisonPillBackgroundColor = insights.expenseComparison.direction === 'up'
+    ? theme.colors.expenseBackground
+    : insights.expenseComparison.direction === 'down'
+      ? theme.colors.incomeBackground
+      : theme.colors.infoBackground;
 
   const chartConfig = {
     backgroundGradientFrom: theme.colors.background,
@@ -210,7 +326,7 @@ export default function ExploreScreen() {
               Resumo mensal
             </Typography>
             <Typography variant="body" color={theme.colors.secondaryText}>
-              Receitas, gastos, aportes e saldo organizados com mais contexto.
+              Um raio-x mais claro do mes para entender onde o dinheiro ganhou ritmo e onde pediu atencao.
             </Typography>
           </View>
           <View style={styles.glanceRow}>
@@ -255,7 +371,7 @@ export default function ExploreScreen() {
 
         <View style={styles.balanceCard}>
           <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
-            Saldo do período
+            Panorama consolidado
           </Typography>
           <Typography
             variant="hero"
@@ -267,7 +383,10 @@ export default function ExploreScreen() {
           >
             {formatCurrency(metrics.balance)}
           </Typography>
-          <View style={styles.comparisonPill}>
+          <Typography variant="body" color={theme.colors.secondaryText} align="center">
+            Receitas, despesas comuns e aportes reunidos em uma leitura unica do periodo.
+          </Typography>
+          <View style={[styles.comparisonPill, { backgroundColor: comparisonPillBackgroundColor }]}>
             <MaterialIcons name={comparisonIcon} size={18} color={comparisonColor} />
             <Typography variant="caption" weight="semibold" color={comparisonColor}>
               {insights.expenseComparison.label}
@@ -302,9 +421,24 @@ export default function ExploreScreen() {
           />
         </View>
 
+        {hasMonthData && (
+          <View style={styles.insightsCluster}>
+            <SectionHeader
+              title="Leituras que valem atencao"
+              subtitle="Textos curtos para te ajudar a entender o que marcou o periodo"
+              style={styles.sectionHeader}
+            />
+            <View style={styles.insightStoryGrid}>
+              {summaryInsights.map((insight) => (
+                <InsightStoryCard key={insight.id} insight={insight} />
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.sectionToggles}>
           <Typography variant="caption" weight="medium" color={theme.colors.secondaryText}>
-            Seções
+            Blocos visiveis
           </Typography>
           <View style={styles.sectionToggleList}>
             <Chip
@@ -335,8 +469,8 @@ export default function ExploreScreen() {
         {!hasMonthData ? (
           <EmptyState
             iconName="bar-chart"
-            title="Sem dados neste mês"
-            message="Quando houver receitas, despesas ou aportes no período, o resumo aparece aqui."
+            title="Nada para ler neste mes ainda"
+            message="Assim que entrar alguma receita, despesa ou aporte, esta area vira um resumo vivo do periodo."
             style={styles.emptyState}
           />
         ) : (
@@ -344,19 +478,42 @@ export default function ExploreScreen() {
             {sectionVisibility.categorySpending && (
               <>
                 <SectionHeader
-                  title="Gastos por categoria"
-                  subtitle="Somente despesas comuns entram nesta distribuição"
+                  title="Mapa das despesas"
+                  subtitle="So as despesas comuns entram nesta distribuicao visual"
                   style={styles.sectionHeader}
                 />
 
-                {chartData.length === 0 ? (
-                  <View style={styles.surfaceCard}>
-                    <Typography variant="body" color={theme.colors.secondaryText} align="center">
-                      Nenhuma despesa comum registrada neste mês.
-                    </Typography>
-                  </View>
+                {!hasChartData ? (
+                  <SectionEmptyMessage
+                    iconName="donut-large"
+                    title="Distribuicao em espera"
+                    message="Quando aparecerem despesas comuns, este mapa mostra com clareza quais categorias mais pesaram no mes."
+                  />
                 ) : (
-                  <View style={styles.chartWrapper}>
+                  <View style={styles.chartSection}>
+                    <View style={styles.chartHighlightCard}>
+                      <View style={styles.chartHighlightHeader}>
+                        <View style={styles.chartHighlightEyebrow}>
+                          <MaterialIcons name="auto-graph" size={16} color={theme.colors.primary} />
+                          <Typography variant="caption" weight="semibold" color={theme.colors.primary}>
+                            Categoria em destaque
+                          </Typography>
+                        </View>
+                        <Typography variant="caption" weight="semibold" color={theme.colors.secondaryText}>
+                          {formatPercentage(topCategoryShare)}
+                        </Typography>
+                      </View>
+                      <Typography variant="body" weight="bold">
+                        {metrics.topExpenseCategory?.category.label ?? 'Sem categoria liderando'}
+                      </Typography>
+                      <Typography variant="body" color={theme.colors.secondaryText}>
+                        {metrics.topExpenseCategory
+                          ? `${formatCurrency(metrics.topExpenseCategory.amount)} concentrados na principal frente de gasto do mes.`
+                          : 'Sem despesas comuns suficientes para destacar uma categoria principal.'}
+                      </Typography>
+                    </View>
+
+                    <View style={styles.chartWrapper}>
                     <PieChart
                       data={chartData}
                       width={chartWidth}
@@ -372,14 +529,20 @@ export default function ExploreScreen() {
                       {chartData.map((item) => (
                         <View key={item.name} style={styles.legendItem}>
                           <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-                          <Typography
-                            variant="caption"
-                            color={theme.colors.secondaryText}
-                            numberOfLines={1}
-                            style={styles.legendName}
-                          >
-                            {item.name}
-                          </Typography>
+                          <View style={styles.legendText}>
+                            <Typography
+                              variant="caption"
+                              color={theme.colors.primaryText}
+                              weight="semibold"
+                              numberOfLines={1}
+                              style={styles.legendName}
+                            >
+                              {item.name}
+                            </Typography>
+                            <Typography variant="caption" color={theme.colors.secondaryText} numberOfLines={1}>
+                              Participacao no total de despesas comuns
+                            </Typography>
+                          </View>
                           <View style={styles.legendValue}>
                             <Typography variant="caption" weight="bold" color={theme.colors.primaryText}>
                               {formatPercentage(item.percentage)}
@@ -392,6 +555,7 @@ export default function ExploreScreen() {
                       ))}
                     </View>
                   </View>
+                  </View>
                 )}
               </>
             )}
@@ -399,19 +563,24 @@ export default function ExploreScreen() {
             {sectionVisibility.topExpenses && (
               <>
                 <SectionHeader
-                  title="Top despesas"
-                  subtitle="As maiores despesas comuns do mês"
+                  title="Saidas que puxaram o mes"
+                  subtitle="As maiores despesas comuns, em ordem de impacto"
                   style={styles.sectionHeader}
                 />
 
                 <View style={styles.surfaceCard}>
                   {topExpenses.length === 0 ? (
-                    <Typography variant="body" color={theme.colors.secondaryText} align="center">
-                      Nenhuma despesa comum para listar.
-                    </Typography>
+                    <SectionEmptyMessage
+                      iconName="leaderboard"
+                      title="Ranking ainda vazio"
+                      message="Quando as primeiras despesas comuns aparecerem, este bloco destaca as saidas que mais moveram o periodo."
+                    />
                   ) : (
                     topExpenses.map((transaction, index) => {
                       const category = getCategoryMeta(transaction.category);
+                      const expenseShare = metrics.expenses > 0
+                        ? (transaction.amount / metrics.expenses) * 100
+                        : 0;
 
                       return (
                         <View
@@ -430,9 +599,14 @@ export default function ExploreScreen() {
                             <Typography variant="body" weight="semibold" numberOfLines={1}>
                               {transaction.description || category.label}
                             </Typography>
-                            <Typography variant="caption" color={theme.colors.secondaryText}>
-                              {category.label}
-                            </Typography>
+                            <View style={styles.expenseMetaRow}>
+                              <Typography variant="caption" color={theme.colors.secondaryText}>
+                                {category.label}
+                              </Typography>
+                              <Typography variant="caption" color={theme.colors.tertiaryText}>
+                                {formatPercentage(expenseShare)} do total
+                              </Typography>
+                            </View>
                           </View>
                           <Typography variant="body" weight="bold" color={theme.colors.expense}>
                             {formatCurrency(transaction.amount)}
@@ -539,6 +713,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: theme.spacing.xs,
   },
+  insightsCluster: {
+    marginTop: theme.spacing.md,
+  },
   sectionToggles: {
     marginTop: theme.spacing.lg,
     gap: theme.spacing.xs,
@@ -575,16 +752,61 @@ const styles = StyleSheet.create({
   sectionHeader: {
     marginTop: theme.spacing.xl,
   },
+  insightStoryGrid: {
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+  insightStoryCard: {
+    borderWidth: 1,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.md,
+  },
+  insightStoryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  insightStoryIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: theme.borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  insightStoryBody: {
+    gap: theme.spacing.xs,
+  },
   surfaceCard: {
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.lg,
     borderRadius: theme.borderRadius.xl,
     ...theme.shadows.sm,
   },
+  chartSection: {
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.sm,
+  },
+  chartHighlightCard: {
+    backgroundColor: theme.colors.primaryBackground,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+  chartHighlightHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  chartHighlightEyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
   chartWrapper: {
     alignItems: 'center',
     overflow: 'hidden',
-    marginTop: theme.spacing.sm,
     paddingVertical: theme.spacing.md,
     paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.xl,
@@ -601,6 +823,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
+  },
+  legendText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 2,
   },
   legendDot: {
     width: 10,
@@ -637,6 +864,32 @@ const styles = StyleSheet.create({
   expenseInfo: {
     flex: 1,
     minWidth: 0,
+    gap: theme.spacing.xs,
+  },
+  expenseMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
+  },
+  sectionEmptyCard: {
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    padding: theme.spacing.xl,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.sm,
+  },
+  sectionEmptyIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primaryBackground,
+  },
+  sectionEmptyText: {
+    alignItems: 'center',
     gap: theme.spacing.xs,
   },
 });

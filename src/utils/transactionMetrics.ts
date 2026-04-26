@@ -195,8 +195,8 @@ function getTopExpenseInsight(currentMonth: MonthlyMetrics): FinancialSummaryIns
   if (!currentMonth.topExpense) {
     return {
       id: 'top-expense',
-      title: 'Maior gasto',
-      message: 'Nenhuma despesa comum registrada neste mês.',
+      title: 'Maior saída',
+      message: 'Ainda não apareceu uma despesa comum que puxe o mês para cima.',
       tone: 'info',
     };
   }
@@ -206,8 +206,8 @@ function getTopExpenseInsight(currentMonth: MonthlyMetrics): FinancialSummaryIns
 
   return {
     id: 'top-expense',
-    title: 'Maior gasto',
-    message: `${expenseLabel} puxou o topo com ${formatCurrency(currentMonth.topExpense.amount)}.`,
+    title: 'Maior saída',
+    message: `${expenseLabel} liderou as saídas do mês com ${formatCurrency(currentMonth.topExpense.amount)}.`,
     tone: 'expense',
   };
 }
@@ -219,8 +219,8 @@ function getMonthlyChangeInsight(
   if (currentMonth.expenses === 0 && expenseComparison.difference === 0) {
     return {
       id: 'monthly-change',
-      title: 'Variação mensal',
-      message: 'Sem despesas comuns nos dois meses comparados.',
+      title: 'Ritmo do mês',
+      message: 'Sem despesas comuns nos dois meses comparados, então o ritmo segue leve por aqui.',
       tone: 'info',
     };
   }
@@ -228,8 +228,8 @@ function getMonthlyChangeInsight(
   if (currentMonth.expenses === 0) {
     return {
       id: 'monthly-change',
-      title: 'Variação mensal',
-      message: `As despesas caíram para zero depois de ${formatCurrency(Math.abs(expenseComparison.difference))} no mês anterior.`,
+      title: 'Ritmo do mês',
+      message: `As despesas comuns zeraram neste mês depois de ${formatCurrency(Math.abs(expenseComparison.difference))} no período anterior.`,
       tone: 'income',
     };
   }
@@ -237,8 +237,8 @@ function getMonthlyChangeInsight(
   if (expenseComparison.percentage === null) {
     return {
       id: 'monthly-change',
-      title: 'Variação mensal',
-      message: `As despesas somaram ${formatCurrency(currentMonth.expenses)} após um mês anterior sem gastos.`,
+      title: 'Ritmo do mês',
+      message: `O mês ganhou movimento com ${formatCurrency(currentMonth.expenses)} em despesas comuns depois de um período anterior sem saídas.`,
       tone: 'info',
     };
   }
@@ -246,8 +246,8 @@ function getMonthlyChangeInsight(
   if (expenseComparison.difference === 0) {
     return {
       id: 'monthly-change',
-      title: 'Variação mensal',
-      message: `Você repetiu ${formatCurrency(currentMonth.expenses)} em despesas, no mesmo nível do mês anterior.`,
+      title: 'Ritmo do mês',
+      message: `As despesas comuns repetiram ${formatCurrency(currentMonth.expenses)} e mantiveram o mesmo compasso do mês anterior.`,
       tone: 'info',
     };
   }
@@ -257,10 +257,10 @@ function getMonthlyChangeInsight(
 
   return {
     id: 'monthly-change',
-    title: 'Variação mensal',
+    title: 'Ritmo do mês',
     message: expenseComparison.difference > 0
-      ? `As despesas subiram ${percentageLabel} (${differenceLabel} a mais) contra o mês anterior.`
-      : `As despesas caíram ${percentageLabel} (${differenceLabel} a menos) contra o mês anterior.`,
+      ? `As despesas comuns aceleraram ${percentageLabel}, com ${differenceLabel} a mais que no mês anterior.`
+      : `As despesas comuns desaceleraram ${percentageLabel}, com ${differenceLabel} a menos que no mês anterior.`,
     tone: expenseComparison.difference > 0 ? 'expense' : 'income',
   };
 }
@@ -269,8 +269,8 @@ function getTopCategoryInsight(currentMonth: MonthlyMetrics): FinancialSummaryIn
   if (!currentMonth.topExpenseCategory || currentMonth.expenses === 0) {
     return {
       id: 'top-category',
-      title: 'Categoria dominante',
-      message: 'Nenhuma categoria dominante por enquanto.',
+      title: 'Categoria em destaque',
+      message: 'Ainda não existe uma categoria puxando a distribuição das despesas comuns.',
       tone: 'info',
     };
   }
@@ -279,8 +279,8 @@ function getTopCategoryInsight(currentMonth: MonthlyMetrics): FinancialSummaryIn
 
   return {
     id: 'top-category',
-    title: 'Categoria dominante',
-    message: `${currentMonth.topExpenseCategory.category.label} concentrou ${share.toFixed(0)}% das despesas (${formatCurrency(currentMonth.topExpenseCategory.amount)}).`,
+    title: 'Categoria em destaque',
+    message: `${currentMonth.topExpenseCategory.category.label} concentrou ${share.toFixed(0)}% das despesas comuns, somando ${formatCurrency(currentMonth.topExpenseCategory.amount)}.`,
     tone: 'primary',
   };
 }
@@ -289,16 +289,16 @@ function getDailyAverageInsight(currentMonth: MonthlyMetrics): FinancialSummaryI
   if (currentMonth.expenses === 0) {
     return {
       id: 'daily-average',
-      title: 'Ritmo diário',
-      message: 'Sem despesas comuns para calcular a média diária neste mês.',
+      title: 'Cadência diária',
+      message: 'Ainda não há despesas comuns suficientes para ler a média diária do mês.',
       tone: 'info',
     };
   }
 
   return {
     id: 'daily-average',
-    title: 'Ritmo diário',
-    message: `A média diária de despesas ficou em ${formatCurrency(currentMonth.dailyAverage)}.`,
+    title: 'Cadência diária',
+    message: `A média diária das despesas comuns ficou em ${formatCurrency(currentMonth.dailyAverage)} neste mês.`,
     tone: 'info',
   };
 }
